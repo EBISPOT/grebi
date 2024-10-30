@@ -91,14 +91,26 @@ fn main() {
             metadata_writer.write_all(ds).unwrap();
             metadata_writer.write_all(r#"""#.as_bytes()).unwrap();
         }
+        metadata_writer.write_all(r#"],"grebi:sourceIds":["#.as_bytes()).unwrap();
+        let mut is_first_sid = true;
+        for sid in sliced.source_ids.iter() {
+
+            all_ids.insert(sid.to_vec());
+
+            if is_first_sid {
+                is_first_sid = false;
+            } else {
+                metadata_writer.write_all(r#","#.as_bytes()).unwrap();
+            }
+            metadata_writer.write_all(r#"""#.as_bytes()).unwrap();
+            metadata_writer.write_all(sid).unwrap();
+            metadata_writer.write_all(r#"""#.as_bytes()).unwrap();
+        }
         metadata_writer.write_all(r#"]"#.as_bytes()).unwrap();
 
 
-        let mut wrote_name = false;
 
-        for sid in sliced.source_ids {
-            all_ids.insert(sid.to_vec());
-        }
+        let mut wrote_name = false;
 
         sliced.props.iter().for_each(|prop| {
 

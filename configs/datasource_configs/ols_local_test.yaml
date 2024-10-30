@@ -1,6 +1,9 @@
 name: OLS
 enabled: true
 ingests:
-  - globs: ["/data/ontologies/ontologies.json.gz"]
-    command: grebi_ingest_ols --ontologies efo,ro,hp
-
+  - globs: ["/data/ontologies/ontologies.json"]
+    command: 'grebi_ingest_ols
+        --datasource-name $GREBI_INGEST_DATASOURCE_NAME
+        --ontologies efo,ro,hp
+        --skip-obsolete
+        '

@@ -184,19 +184,25 @@ fn value_to_solr(v:&Value, refs:&Map<String,Value>) -> Vec<Value> {
     if v.is_string() {
         let metadata = refs.get(&v.as_str().unwrap().to_owned());
         if metadata.is_some() {
+            // this value had metadata so it's some kind of ID
+            let mut res = vec!(v.clone());
             let metadata_u = metadata.unwrap();
             let names = metadata_u.get("grebi:name");
             if names.is_some() {
-                // add both the ID and its labels
-                return {
-                    let mut res = vec!(v.clone());
-                    for label in names.unwrap().as_array().unwrap() {
-                        res.push(label.clone());
-                    }
-                    res
+                // add all the corresponding labels
+                for label in names.unwrap().as_array().unwrap() {
+                    res.push(label.clone());
+                }
+            }
+            let sids = metadata_u.get("grebi:sourceIds");
+            if sids.is_some() {
+                // add all the source ids
+                for sid in sids.unwrap().as_array().unwrap() {
+                    res.push(sid.clone());
                 }
             }
         } else {
+            // no metadata, just a regular string
             return vec!(v.clone());
         }
     }

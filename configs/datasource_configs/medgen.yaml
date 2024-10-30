@@ -1,8 +1,6 @@
 name: MedGen
 enabled: true
 ingests:
-  - globs: ["./00_fetch_data/medgen/medgen.owl.gz"]
-    command: '
-      grebi_rdf2jsonl
-          --rdf-type rdf_triples_xml
-          --rdf-types-are-grebi-types'
+  - globs: ["./00_fetch_data/medgen/medgen.json.gz"]
+    command: grebi_ingest_ols --datasource-name $GREBI_INGEST_DATASOURCE_NAME --ontologies medgen
+

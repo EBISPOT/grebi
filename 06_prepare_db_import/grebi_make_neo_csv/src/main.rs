@@ -131,6 +131,10 @@ fn main() -> std::io::Result<()> {
 
         write_node(&line, &sliced, &all_entity_props, &mut nodes_writer, &mut id_edges_writer, &add_prefix);
 
+        for source_id in sliced.source_ids.iter() {
+            write_id_row(&mut id_edges_writer, &sliced.id, &source_id, &add_prefix);
+        }
+
         n_nodes = n_nodes + 1;
         if n_nodes % 1000000 == 0 {
             eprintln!("... written {} nodes", n_nodes);
@@ -231,11 +235,6 @@ fn write_node(src_line:&[u8], entity:&SlicedEntity, all_node_props:&HashSet<Stri
                     continue; // already written above
                 }
                 if header_prop.as_bytes() == row_prop.key {
-                    if row_prop.key == "grebi:sourceIds".as_bytes() {
-                        for val in row_prop.values.iter() {
-                            write_id_row(val, id_edges_writer, &entity.id, &add_prefix);
-                        }
-                    }
                     let mut written_values:BTreeSet<Vec<u8>> = BTreeSet::new();
                     for val in row_prop.values.iter() {
                         if !wrote_any {
@@ -366,20 +365,44 @@ fn get_value_to_write(buf:&[u8], refs:&Map<String,Value>) -> Vec<u8> {
     match json.peek().kind {
         JsonTokenType::StartString => {
             let str = json.string();
-            let mut to_write = get_escaped_value(&str);
 
             let metadata = refs.get(&String::from_utf8_lossy(str).to_string());
             if metadata.is_some() {
+
+                // this value had metadata so it's some kind of ID
+                // all of these will also have corresponding edges
+                //
+                // in Neo4j we write all the labels first, then all the source IDs
+                // the grebi:nodeId (merged ID) is not currently written as it probably has
+                // limited value in neo4j prop val searches
+                //
                 let metadata_u = metadata.unwrap();
+                let mut to_write = Vec::new();
                 let names = metadata_u.get("grebi:name");
                 if names.is_some() {
                     for name in names.unwrap().as_array().unwrap() {
-                        to_write.push(31);
-                        to_write.extend(get_escaped_value(buf));
+                        if name.is_string() {
+                            if to_write.len() > 0 {
+                                to_write.push(31);
+                            }
+                            to_write.extend(get_escaped_value(name.as_str().unwrap().as_bytes()));
+                        }
+                    }
+                } 
+                let source_ids = metadata_u.get("grebi:sourceIds");
+                for sid in source_ids.unwrap().as_array().unwrap() {
+                    if sid.is_string() {
+                        if to_write.len() > 0 {
+                            to_write.push(31);
+                        }
+                        to_write.extend(get_escaped_value(sid.as_str().unwrap().as_bytes()));
                     }
                 }
+                return to_write;
+            } else {
+                // no metadata, just a regular string
+                return get_escaped_value(&str);
             }
-            to_write
         },
         _ => {
             get_escaped_value(&buf)
@@ -387,20 +410,7 @@ fn get_value_to_write(buf:&[u8], refs:&Map<String,Value>) -> Vec<u8> {
     }
 }
 
-fn write_id_row(val:&SlicedPropertyValue, id_edges_writer:&mut BufWriter<&File>, grebi_node_id:&[u8], add_prefix:&[u8]) {
-
-    let actual_id = {
-        if val.kind == JsonTokenType::StartObject {
-            let reified = SlicedReified::from_json(&val.value); 
-            if reified.is_some() {
-                JsonParser::parse(&reified.unwrap().value).string()
-            } else {
-                JsonParser::parse(&val.value).string()
-            }
-        } else { 
-            JsonParser::parse(&val.value).string()
-        }
-    };
+fn write_id_row(id_edges_writer:&mut BufWriter<&File>, grebi_node_id:&[u8], actual_id:&[u8], add_prefix:&[u8]) {
 
     id_edges_writer.write_all(b"\"").unwrap();
     write_escaped_value(&add_prefix, id_edges_writer);
