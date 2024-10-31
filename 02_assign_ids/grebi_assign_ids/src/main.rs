@@ -12,8 +12,6 @@ use clap::Parser;
 
 use grebi_shared::find_strings;
 use grebi_shared::load_groups_txt::load_id_to_group_mapping;
-use grebi_shared::check_id;
-
 
 #[derive(clap::Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -200,7 +198,10 @@ fn get_ids<'a, 'b>(json:&mut JsonParser<'a>, ids:&'b mut BTreeSet<&'a [u8]>) {
         json.end_array();
     } else if json.peek().kind == JsonTokenType::StartString {
         let id = json.string();
-        ids.insert(id.clone());
+        if check_id(&id) {
+            ids.insert(id.clone());
+        }
+
     } else if json.peek().kind == JsonTokenType::StartObject {
         // maybe a reification
         json.begin_object();
@@ -218,3 +219,17 @@ fn get_ids<'a, 'b>(json:&mut JsonParser<'a>, ids:&'b mut BTreeSet<&'a [u8]>) {
     }
 }
 
+
+// Duplicated in grebi_extract_identifiers
+fn check_id(id:&[u8]) -> bool {
+    if id.len() >= 16 {
+        // long numeric ID is prob a UUID and fine
+        return true;
+    }
+    for c in id {
+        if !c.is_ascii_digit() {
+            return true;
+        }
+    }
+    return false;
+}

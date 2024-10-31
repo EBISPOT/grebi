@@ -129,6 +129,7 @@ fn write_ids(k:&[u8], json:&mut JsonParser, writer:&mut BufWriter<io::StdoutLock
 }
 
 
+// Duplicated in grebi_assign_ids
 fn check_id(k:&[u8], id:&[u8]) -> bool {
     if id.len() >= 16 {
         // long numeric ID is prob a UUID and fine
