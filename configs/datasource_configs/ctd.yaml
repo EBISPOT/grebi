@@ -43,6 +43,7 @@ ingests:
           --json-inject-key-prefix ctd:
           --json-inject-value-prefix PubMedIDs:pmid:
           --json-inject-value-prefix OmimIDs:omim:
+          --json-inject-value-prefix ChemicalID:mesh:
       | grebi_nodes2edges
           --from-field ctd:ChemicalID
           --to-field ctd:DiseaseID
@@ -61,6 +62,7 @@ ingests:
          --tsv-columns ChemicalName,ChemicalID,CasRN,PathwayName,PathwayID,PValue,CorrectedPValue,TargetMatchQty,TargetTotalQty,BackgroundMatchQty,BackgroundTotalQty
       | grebi_transform_jsonl 
           --json-inject-key-prefix ctd:
+          --json-inject-value-prefix ChemicalID:mesh:
       | grebi_nodes2edges
           --from-field ctd:ChemicalID
           --to-field ctd:PathwayID
@@ -74,6 +76,7 @@ ingests:
       | grebi_transform_jsonl 
           --json-inject-type ctd:Chemical
           --json-inject-value-prefix CasRN:cas:
+          --json-inject-value-prefix ChemicalID:mesh:
       | grebi_transform_jsonl 
           --json-rename-field ChemicalID:id
           --json-rename-field CasRN:grebi:equivalentTo'
