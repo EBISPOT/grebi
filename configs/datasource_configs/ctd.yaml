@@ -16,6 +16,7 @@ ingests:
          --tsv-columns grebi:name,ChemicalID,CasRN,GeneSymbol,GeneID,GeneForms,Organism,OrganismID,Interaction,InteractionActions,PubMedIDs
       | grebi_transform_jsonl 
           --json-inject-key-prefix ctd:
+          --json-inject-value-prefix ChemicalID:mesh:
           --json-inject-value-prefix GeneID:ncbigene:
           --json-inject-value-prefix OrganismID:ncbitaxon:
           --json-inject-value-prefix PubMedIDs:pmid:
@@ -29,6 +30,7 @@ ingests:
          --tsv-array-delimiter "|"
          --tsv-columns ChemicalName,ChemicalID,CasRN,Ontology,GOTermName,GOTermID,HighestGOLevel,PValue,CorrectedPValue,TargetMatchQty,TargetTotalQty,BackgroundMatchQty,BackgroundTotalQty
       | grebi_transform_jsonl 
+          --json-inject-value-prefix ChemicalID:mesh:
           --json-inject-key-prefix ctd:
       | grebi_nodes2edges
           --from-field ctd:ChemicalID
