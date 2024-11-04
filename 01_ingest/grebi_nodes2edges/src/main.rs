@@ -1,6 +1,7 @@
 
 use std::collections::HashMap;
 use std::io::{BufWriter, self, BufReader, Write,BufRead};
+use std::vec;
 use clap::Parser;
 use serde_json::{self, de, Map};
 use serde_json::Value;
@@ -44,8 +45,8 @@ fn main() {
         let json:serde_json::Map<String,Value> = serde_json::from_slice(&line).unwrap();
         let mut out_props_json = serde_json::Map::new();
 
-        let from = json.get(&args.from_field);
-        let to = json.get(&args.to_field);
+        let from = json.get(&args.from_field).unwrap();
+        let to = json.get(&args.to_field).unwrap();
 
         for (k,v) in json.iter() {
 
@@ -56,19 +57,27 @@ fn main() {
                 continue;
             }
 
+            // everything apart from the from: and to: fields is metadata
+            // which will be repeated for each (from x to) combination
             out_props_json.insert(k.clone(), v.clone());
         }
 
-        let mut out_value = serde_json::Map::new();
-        out_value.insert("grebi:value".to_string(), to.unwrap().clone());
-        out_value.insert("grebi:properties".to_string(), Value::Object(out_props_json));
+        for from_val in from.as_array().unwrap() {
+            for to_val in to.as_array().unwrap() {
+                let mut out_value = serde_json::Map::new();
+                out_value.insert("grebi:value".to_string(), to_val.clone());
+                out_value.insert("grebi:properties".to_string(), Value::Object(out_props_json.clone()));
 
-        let mut out_json = serde_json::Map::new();
-        out_json.insert("id".to_string(), from.unwrap().clone());
-        out_json.insert(args.edge_type.to_string(), Value::Object(out_value));
+                let mut out_json = serde_json::Map::new();
+                out_json.insert("id".to_string(), from_val.clone());
+                out_json.insert(args.edge_type.to_string(), Value::Object(out_value));
 
-        output_nodes.write_all(Value::Object(out_json).to_string().as_bytes()).unwrap();
-        output_nodes.write_all("\n".as_bytes()).unwrap();
+                output_nodes.write_all(Value::Object(out_json).to_string().as_bytes()).unwrap();
+                output_nodes.write_all("\n".as_bytes()).unwrap();
+            }
+
+
+        }
     }
 
     output_nodes.flush().unwrap();
