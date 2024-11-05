@@ -7,12 +7,6 @@ ingests:
           --json-rename-field mgiGeneAccessionId:id
           --json-inject-type impc:MouseGene
           --json-inject-key-prefix impc:'
-  - globs: ["/nfs/production/parkinso/spot/jmcl/impc-kg/categorical_observation_json/*.json.gz"]
-    command: '
-      grebi_transform_jsonl
-          --json-rename-field observationId:id
-          --json-inject-type impc:CategoricalObservation
-          --json-inject-key-prefix impc:'
   - globs: ["/nfs/production/parkinso/spot/jmcl/impc-kg/embryo_specimen_json/*.json.gz"]
     command: '
         grebi_transform_jsonl
@@ -68,38 +62,12 @@ ingests:
             --json-rename-field procedureId:id
             --json-inject-type impc:Procedure
             --json-inject-key-prefix impc:'
-  - globs: ["/nfs/production/parkinso/spot/jmcl/impc-kg/specimen_experiment_json/*.json.gz"]
-    command: '
-        grebi_transform_jsonl
-            --json-rename-field experimentId:id
-            --json-inject-type impc:SpecimenExperiment
-            --json-inject-key-prefix impc:'
   - globs: ["/nfs/production/parkinso/spot/jmcl/impc-kg/text_observation_json/*.json.gz"]
     command: '
         grebi_transform_jsonl
             --json-rename-field observationId:id
             --json-inject-type impc:TextObservation
             --json-inject-key-prefix impc:'
-  - globs: ["/nfs/production/parkinso/spot/jmcl/impc-kg/time_series_observation_json/*.json.gz"]
-    command: '
-        grebi_transform_jsonl
-            --json-rename-field observationId:id
-            --json-inject-type impc:TimeSeriesObservation
-            --json-inject-key-prefix impc:'
-  - globs: ["/nfs/production/parkinso/spot/jmcl/impc-kg/unidimensional_observation_json/*.json.gz"]
-    command: '
-        grebi_transform_jsonl
-            --json-rename-field observationId:id
-            --json-inject-type impc:UnidimensionalObservation
-            --json-inject-key-prefix impc:'
-  - globs: ["/nfs/production/parkinso/spot/jmcl/impc-kg/statistical_result_json/*.json.gz"]
-    command: '
-        grebi_transform_jsonl
-            --json-rename-field statisticalResultId:id
-            --json-inject-type impc:StatisticalResult
-            --json-inject-key-prefix impc:
-            --json-de-nest-field potentialPhenotypes.id
-            --json-de-nest-field statisticalMethod.name'
   - globs: ["/nfs/production/parkinso/spot/jmcl/impc-kg/human_gene_json/*.json.gz"]
     command: '
         grebi_transform_jsonl

@@ -1,8 +1,8 @@
 {
     "subgraphs": [
-        "ebi_full_monarch",
+        "ebi_monarch_xspecies",
+        "impc",
         "monarch",
-        "hra_kg",
-        "hett"
+        "hra_kg"
     ]
 }
