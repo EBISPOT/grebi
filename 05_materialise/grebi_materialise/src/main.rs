@@ -113,6 +113,8 @@ fn main() -> std::io::Result<()> {
     id_to_group.clear();
     id_to_group.shrink_to(0);
 
+    let mut displaytype_to_count:HashMap<Vec<u8>, i64> = HashMap::new();
+
     let node_metadata = load_metadata_mapping_table::load_metadata_mapping_table(&args.in_metadata_jsonl);
 
     let mut types_to_count:HashMap<Vec<u8>,i64> = HashMap::new();
@@ -211,9 +213,20 @@ fn main() -> std::io::Result<()> {
 
         nodes_writer.write_all(&line[0..line.len()-1] /* skip closing bracket */).unwrap();
         if rarest_type.is_some() {
+
+            let displaytype = rarest_type.unwrap();
+
             nodes_writer.write_all(b",\"grebi:displayType\":\"").unwrap();
-            nodes_writer.write_all(&rarest_type.unwrap()).unwrap();
+            nodes_writer.write_all(&displaytype).unwrap();
             nodes_writer.write_all(b"\"").unwrap();
+
+            let mut w_count = displaytype_to_count.get_mut(&displaytype);
+            if w_count.is_none() {
+                displaytype_to_count.insert(displaytype.clone(), 0);
+            }
+            w_count = displaytype_to_count.get_mut(&displaytype);
+            let count:&mut i64 = w_count.unwrap();
+            *count += 1;
         }
         nodes_writer.write_all(b",\"_refs\":").unwrap();
         nodes_writer.write_all(serde_json::to_string(&_refs).unwrap().as_bytes()).unwrap();
@@ -254,6 +267,11 @@ fn main() -> std::io::Result<()> {
         "entity_prop_defs": entity_prop_defs,
         "edge_prop_defs": edge_prop_defs,
         "types": type_defs,
+        "displaytypes": displaytype_to_count.iter().map(|(k,v)| {
+            return (String::from_utf8(k.to_vec()).unwrap(), json!({
+                "count": v
+            }))
+        }).collect::<HashMap<String,serde_json::Value>>(),
         "edges": edge_summary
     })).unwrap().as_bytes()).unwrap();
 
