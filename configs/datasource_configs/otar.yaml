@@ -6,4 +6,5 @@ ingests:
       grebi_transform_jsonl
           --json-inject-type otar:Evidence
           --json-inject-key-prefix otar:
-          --json-inject-value-prefix literature:pmid:'
+          --json-inject-value-prefix literature:pmid:
+          --json-inject-value-prefix targetId:ensembl:'

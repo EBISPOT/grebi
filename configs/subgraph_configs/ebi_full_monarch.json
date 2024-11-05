@@ -73,6 +73,7 @@
         "ols:ontology_purl",
         "ols:ontologyId",
         "cheminf:000407",
+        "cheminf:InChIKey",
         "biolink:interacts_with",
         "reactome:url",
         "dc:Identifier",
@@ -88,7 +89,10 @@
         "edam:Ensembl_gene_id",
         "obo:pr#has_gene_template",
         "ols:relatedTo",
-        "ols:relatedFrom"
+        "ols:relatedFrom",
+        "robokop:smiles",
+        "ctd:ChemicalURL",
+        "ctd:UniProtIDs"
      ],
     "datasource_configs": [
         "./configs/datasource_configs/gwas.yaml",
