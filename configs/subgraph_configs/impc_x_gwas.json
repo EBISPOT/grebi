@@ -4,27 +4,11 @@
   "bytes_per_merged_file": 1073741824,
   "identifier_props": [
     "id",
-    "owl:equivalentClass",
-    "owl:equivalentProperty",
-    "owl:sameAs",
-    "grebi:hashId",
-    "grebi:equivalentTo",
+    "monarch:iri",
     "ols:iri",
     "ols:shortForm",
-    "hgnc:ensembl_gene_id",
-    "obo:chebi/inchi",
-    "obo:chebi/inchikey",
-    "obo:chebi/smiles",
     "impc:pmId",
-    "impc:humanGeneAccId",
-    "monarch:iri",
-    "skos:exactMatch",
-    "ncit:P368",
-    "ncit:C98965",
-    "dcterms:identifier",
-    "oboinowl:hasAlternativeId",
-    "robokop:equivalent_identifiers",
-    "mesh.vocab:identifier"
+    "impc:humanGeneAccId"
   ],
   "type_superclasses": [
     "mondo:0000001",
@@ -139,7 +123,6 @@
     "./configs/datasource_configs/ols.yaml",
     "./configs/datasource_configs/mondo_efo.yaml",
     "./configs/datasource_configs/monarch.yaml",
-    "./configs/datasource_configs/sssom.yaml",
-    "./configs/datasource_configs/mondo_efo.yaml"
+    "./configs/datasource_configs/sssom.yaml"
   ]
 }
