@@ -16,7 +16,7 @@ Note that the purpose of this pipeline is not to supply another knowledge graph,
 
 ## Mapping sets used
  
-The following SSSOM tables are loaded:
+The following mapping tables are loaded:
 
 * https://data.monarchinitiative.org/mappings/latest/gene_mappings.sssom.tsv
 * https://data.monarchinitiative.org/mappings/latest/hp_mesh.sssom.tsv
@@ -27,8 +27,9 @@ The following SSSOM tables are loaded:
 * https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/master/mappings/mp_hp_mgi_all.sssom.tsv
 * https://raw.githubusercontent.com/obophenotype/bio-attribute-ontology/master/src/mappings/oba-efo.sssom.tsv
 * https://raw.githubusercontent.com/obophenotype/bio-attribute-ontology/master/src/mappings/oba-vt.sssom.tsv
+* https://github.com/biopragmatics/biomappings/raw/refs/heads/master/src/biomappings/resources/mappings.tsv
 
-In all of the currently configured outputs, `skos:exactMatch` mappings cause clique merging. In `ebi_monarch_xspecies`, `semapv:crossSpeciesExactMatch` also causes clique merging (so e.g. corresponding HP and MP terms will share a graph node). As this is not always desirable a separate graph `ebi_monarch` is also provided where `semapv:crossSpeciesExactMatch` mappings are represented as edges.
+In all of the currently configured outputs, `skos:exactMatch` mappings cause clique merging. In `ebi_monarch_xspecies`, `semapv:crossSpeciesExactMatch` also causes clique merging (so e.g. corresponding HP and MP terms will share a graph node). As this is not always desirable, a separate graph `ebi_monarch` is also provided where `semapv:crossSpeciesExactMatch` mappings are represented as edges.
 
 ## Full list of datasources
 
