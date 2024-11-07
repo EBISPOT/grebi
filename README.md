@@ -1,6 +1,6 @@
 # GrEBI (Graphs@EBI)
 
-HPC pipeline to aggregate knowledge graphs from [EMBL-EBI resources](https://www.ebi.ac.uk/services/data-resources-and-tools), the [MONARCH Initiative KG](https://monarch-initiative.github.io/monarch-ingest/Sources/), [ROBOKOP](https://robokop.renci.org/), [Ubergraph](https://github.com/INCATools/ubergraph), and other sources into giant (multi-terabyte) Neo4j+Solr+RocksDB databases for querying.
+HPC pipeline to aggregate knowledge graphs from [EMBL-EBI resources](https://www.ebi.ac.uk/services/data-resources-and-tools), the [MONARCH Initiative KG](https://monarch-initiative.github.io/monarch-ingest/Sources/), [ROBOKOP](https://robokop.renci.org/), [Ubergraph](https://github.com/INCATools/ubergraph), and other sources into giant (multi-terabyte) transient Neo4j+Solr+RocksDB databases for querying.
 
 ## Outputs
 
