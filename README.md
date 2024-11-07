@@ -2,6 +2,34 @@
 
 HPC pipeline to aggregate knowledge graphs from [EMBL-EBI resources](https://www.ebi.ac.uk/services/data-resources-and-tools), the [MONARCH Initiative KG](https://monarch-initiative.github.io/monarch-ingest/Sources/), [ROBOKOP](https://robokop.renci.org/), [Ubergraph](https://github.com/INCATools/ubergraph), and other sources into giant (multi-terabyte) Neo4j+Solr+RocksDB databases for querying.
 
+## Outputs
+
+The resulting databases can be downloaded from https://ftp.ebi.ac.uk/pub/databases/spot/kg/ebi/
+
+| Name | Description | # Nodes | # Edges | Neo4j DB size
+| ---------- | ------ | --- | --- | --- |
+| `ebi_monarch_xspecies` | All datasources with cross-species phenotype matches merged | ~130m | ~850m | ~900 GB |
+| `ebi_monarch` | All datasources with cross-species phenotype matches separated | | | |
+| `impc_x_gwas` | Limited to data from IMPC, GWAS Catalog, and related ontologies and mappings | |  |  |
+
+## Mapping sets used
+ 
+The following SSSOM tables are loaded:
+
+* https://data.monarchinitiative.org/mappings/latest/gene_mappings.sssom.tsv
+* https://data.monarchinitiative.org/mappings/latest/hp_mesh.sssom.tsv
+* https://data.monarchinitiative.org/mappings/latest/mesh_chebi_biomappings.sssom.tsv
+* https://data.monarchinitiative.org/mappings/latest/mondo.sssom.tsv
+* https://data.monarchinitiative.org/mappings/latest/umls_hp.sssom.tsv
+* https://data.monarchinitiative.org/mappings/latest/upheno_custom.sssom.tsv
+* https://raw.githubusercontent.com/mapping-commons/mh_mapping_initiative/master/mappings/mp_hp_mgi_all.sssom.tsv
+* https://raw.githubusercontent.com/obophenotype/bio-attribute-ontology/master/src/mappings/oba-efo.sssom.tsv
+* https://raw.githubusercontent.com/obophenotype/bio-attribute-ontology/master/src/mappings/oba-vt.sssom.tsv
+
+In all of the currently configured outputs, `skos:exactMatch` mappings cause clique merging. In `ebi_monarch_xspecies`, `semapv:crossSpeciesExactMatch` also causes clique merging (so e.g. corresponding HP and MP terms will share a graph node). As this is not always desirable a separate graph `ebi_monarch` is also provided where `semapv:crossSpeciesExactMatch` mappings are represented as edges.
+
+## Full list of datasources
+
 | Datasource | Loaded from |
 | ---------- | ------ |
 | [IMPC](https://www.mousephenotype.org/) | EBI
@@ -47,7 +75,6 @@ HPC pipeline to aggregate knowledge graphs from [EMBL-EBI resources](https://www
 | [MeSH](https://www.ncbi.nlm.nih.gov/mesh/)
 | [Human Reference Atlas KG](https://humanatlas.io/)
 
-The resulting graphs can be downloaded from https://ftp.ebi.ac.uk/pub/databases/spot/kg/ebi/
 
 ## Implementation
 
