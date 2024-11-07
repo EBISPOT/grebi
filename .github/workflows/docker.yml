@@ -27,28 +27,28 @@ jobs:
 
       - name: Build and push GrEBI API Docker image
         run: |
-          cd grebi_api
+          cd webapp/grebi_api
           docker build -t ghcr.io/ebispot/grebi_api:${{ github.sha }} .
           docker tag ghcr.io/ebispot/grebi_api:${{github.sha}} ghcr.io/ebispot/grebi_api:${{ github.ref_name }}
           docker push --all-tags ghcr.io/ebispot/grebi_api
 
       - name: Build and push GrEBI resolver service Docker image
         run: |
-          cd grebi_resolver_service
+          cd webapp/grebi_resolver_service
           docker build -t ghcr.io/ebispot/grebi_resolver_service:${{ github.sha }} .
           docker tag ghcr.io/ebispot/grebi_resolver_service:${{github.sha}} ghcr.io/ebispot/grebi_resolver_service:${{ github.ref_name }}
           docker push --all-tags ghcr.io/ebispot/grebi_resolver_service
 
       - name: Build and push GrEBI summary service Docker image
         run: |
-          cd grebi_summary_service
+          cd webapp/grebi_summary_service
           docker build -t ghcr.io/ebispot/grebi_summary_service:${{ github.sha }} .
           docker tag ghcr.io/ebispot/grebi_summary_service:${{github.sha}} ghcr.io/ebispot/grebi_summary_service:${{ github.ref_name }}
           docker push --all-tags ghcr.io/ebispot/grebi_summary_service
 
       - name: Build and push GrEBI UI Docker image
         run: |
-          cd grebi_ui
+          cd webapp/grebi_ui
           docker build -t ghcr.io/ebispot/grebi_ui:${{ github.sha }} .
           docker tag ghcr.io/ebispot/grebi_ui:${{github.sha}} ghcr.io/ebispot/grebi_ui:${{ github.ref_name }}
           docker push --all-tags ghcr.io/ebispot/grebi_ui
