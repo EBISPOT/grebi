@@ -85,7 +85,7 @@ process create_neo {
 
 process package_neo {
     cache "lenient"
-    memory "32 GB" 
+    memory "16 GB" 
     time "8h"
     cpus "16"
 
@@ -105,7 +105,7 @@ process package_neo {
 
 process package_rocks {
     cache "lenient"
-    memory "32 GB" 
+    memory "16 GB" 
     time "8h"
     cpus "16"
 
@@ -125,7 +125,7 @@ process package_rocks {
 
 process package_solr {
     cache "lenient"
-    memory "32 GB" 
+    memory "16 GB" 
     time "8h"
     cpus "16"
 

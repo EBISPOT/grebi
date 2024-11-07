@@ -117,7 +117,7 @@ process ingest {
 
 process build_equiv_groups {
     cache "lenient"
-    memory '64 GB'
+    memory '16 GB'
     time '23h'
 
     input:
@@ -199,7 +199,7 @@ process merge_ingests {
 
 process index {
     cache "lenient"
-    memory "64 GB" 
+    memory "16 GB" 
     time "8h"
 
     publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
@@ -229,7 +229,7 @@ process index {
 
 process materialise {
     cache "lenient"
-    memory "64 GB"
+    memory "16 GB"
     time "8h"
     //time { 1.hour + 8.hour * (task.attempt-1) }
     //errorStrategy { task.exitStatus in 137..140 ? 'retry' : 'terminate' }
@@ -288,7 +288,7 @@ process merge_summary_jsons {
 
 process create_rocks {
     cache "lenient"
-    memory "64 GB" 
+    memory "16 GB" 
     time "23h"
     cpus "8"
     errorStrategy 'retry'
@@ -416,7 +416,7 @@ process create_neo {
 
 process create_solr_nodes_core {
     cache "lenient"
-    memory "64 GB" 
+    memory "16 GB" 
     time "23h"
     cpus "16"
     
@@ -445,7 +445,7 @@ process create_solr_nodes_core {
 
 process create_solr_edges_core {
     cache "lenient"
-    memory "64 GB" 
+    memory "16 GB" 
     time "23h"
     cpus "16"
 
@@ -474,7 +474,7 @@ process create_solr_edges_core {
 
 process create_solr_autocomplete_core {
     cache "lenient"
-    memory "64 GB" 
+    memory "16 GB" 
     time "4h"
     cpus "4"
 
@@ -501,7 +501,7 @@ process create_solr_autocomplete_core {
 
 process package_neo {
     cache "lenient"
-    memory "32 GB" 
+    memory "16 GB" 
     time "8h"
     cpus "16"
 
@@ -521,7 +521,7 @@ process package_neo {
 
 process package_rocks {
     cache "lenient"
-    memory "32 GB" 
+    memory "16 GB" 
     time "8h"
     cpus "16"
 
@@ -541,7 +541,7 @@ process package_rocks {
 
 process package_solr {
     cache "lenient"
-    memory "32 GB" 
+    memory "16 GB" 
     time "8h"
     cpus "16"
 
