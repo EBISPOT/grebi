@@ -12,14 +12,6 @@ config['datasource_configs'] = [
     "./configs/datasource_configs/monarch.yaml",
     "./configs/datasource_configs/sssom.yaml"
 ]
-config['identifier_props'] = [
-    "id",
-    "monarch:iri",
-    "ols:iri",
-    "ols:shortForm",
-    "impc:pmId",
-    "impc:humanGeneAccId"
-]
 
 if __name__ == '__main__':
     import json
