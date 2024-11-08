@@ -127,6 +127,9 @@
     <field name="grebi__sourceIds" type="string" indexed="true" stored="true" required="false" multiValued="true" />
     <copyField source="grebi__sourceIds" dest="str_grebi__sourceIds"/>
     <copyField source="grebi__sourceIds" dest="lowercase_grebi__sourceIds"/>
+    <field name="grebi__displayType" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+    <copyField source="grebi__displayType" dest="str_grebi__displayType"/>
+    <copyField source="grebi__displayType" dest="lowercase_grebi__displayType"/>
 
     [[GREBI_FIELDS]]
 
