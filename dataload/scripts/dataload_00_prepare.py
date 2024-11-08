@@ -9,12 +9,12 @@ def main():
 
     print("subgraph is " + os.environ['GREBI_SUBGRAPH'])
 
-    config_filename = os.path.abspath(os.path.join(os.environ['GREBI_HOME'], 'configs/subgraph_configs/', os.environ['GREBI_SUBGRAPH'] + '.json'))
+    config_filename = os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], 'configs/subgraph_configs/', os.environ['GREBI_SUBGRAPH'] + '.json'))
 
     with open(config_filename, 'r') as f:
         config = json.load(f)
 
-    datasources = map(lambda x: yaml.load(open(os.path.join(os.environ['GREBI_HOME'], x), 'r'), Loader=yaml.FullLoader), config['datasource_configs'])
+    datasources = map(lambda x: yaml.load(open(os.path.join(os.environ['GREBI_DATALOAD_HOME'], x), 'r'), Loader=yaml.FullLoader), config['datasource_configs'])
     datasource_files = []
 
     for datasource in datasources:
@@ -23,7 +23,7 @@ def main():
         else:
             for ingest in datasource['ingests']:
                 for g in ingest['globs']:
-                    files = glob.glob(os.path.join(os.environ['GREBI_HOME'], g))
+                    files = glob.glob(os.path.join(os.environ['GREBI_DATALOAD_HOME'], g))
                     for file in files:
                         filename = os.path.abspath(file)
                         datasource_files.append(json.dumps({

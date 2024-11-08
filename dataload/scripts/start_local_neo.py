@@ -8,7 +8,7 @@ import time
 import glob
 from subprocess import Popen, PIPE, STDOUT
 
-GREBI_HOME = os.environ['GREBI_HOME']
+GREBI_DATALOAD_HOME = os.environ['GREBI_DATALOAD_HOME']
 GREBI_CONFIG = os.environ['GREBI_CONFIG']
 GREBI_TMP = os.environ['GREBI_TMP']
 

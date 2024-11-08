@@ -5,7 +5,7 @@ import groovy.json.JsonSlurper
 jsonSlurper = new JsonSlurper()
 
 params.tmp = "$GREBI_TMP"
-params.home = "$GREBI_HOME"
+params.home = "$GREBI_DATALOAD_HOME"
 params.config = "$GREBI_CONFIG"
 params.timestamp = "$GREBI_TIMESTAMP"
 params.is_ebi = "$GREBI_IS_EBI"
