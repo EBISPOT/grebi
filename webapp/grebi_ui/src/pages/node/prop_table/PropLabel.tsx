@@ -26,7 +26,7 @@ export default function PropLabel(params:{prop:string,refs:Refs}) {
         if(displayName) {
                 return <b>{displayName}
                         <Tooltip
-                        title={ref.id.join('; ')}
+                        title={ref.sourceIds.join('; ')}
                         placement="top"
                         arrow
                     >

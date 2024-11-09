@@ -143,8 +143,8 @@ public class GrebiApi {
                            .map(edge -> {
                                Map<String, Object> refs = (Map<String,Object>) edge.get("_refs");
                                Map<String, Object> retEdge = new LinkedHashMap<>(edge);
-                               retEdge.put("grebi:from", refs.get((String) edge.get("grebi:from")));
-                               retEdge.put("grebi:to", refs.get((String) edge.get("grebi:to")));
+                               retEdge.put("grebi:fromNodeId", refs.get((String) edge.get("grebi:fromNodeId")));
+                               retEdge.put("grebi:toNodeId", refs.get((String) edge.get("grebi:toNodeId")));
 
 //                               String type = (String)edge.get("grebi:type");
 //                               if(refs.containsKey(type)) {
@@ -169,7 +169,7 @@ public class GrebiApi {
                         q.addFacetField(facet);
                     }
 
-                    q.addFilter("grebi:from", Set.of(ctx.pathParam("nodeId")),
+                    q.addFilter("grebi:fromNodeId", Set.of(ctx.pathParam("nodeId")),
                             /* this is actually a string field so this is an exact match */ SearchType.CASE_INSENSITIVE_TOKENS,
                             false);
 
@@ -191,8 +191,8 @@ public class GrebiApi {
                                     .map(edge -> {
                                         Map<String, Object> refs = (Map<String,Object>) edge.get("_refs");
                                         Map<String, Object> retEdge = new LinkedHashMap<>(edge);
-                                        retEdge.put("grebi:from", refs.get((String) edge.get("grebi:from")));
-                                        retEdge.put("grebi:to", refs.get((String) edge.get("grebi:to")));
+                                        retEdge.put("from", refs.get((String) edge.get("grebi:fromNodeId")));
+                                        retEdge.put("to", refs.get((String) edge.get("grebi:toNodeId")));
 
 //                               String type = (String)edge.get("grebi:type");
 //                               if(refs.containsKey(type)) {
@@ -205,7 +205,7 @@ public class GrebiApi {
                 })
 //                .get("/api/v1/edge_types", ctx -> {
 //                    ctx.contentType("application/json");
-//                    ctx.result(gson.toJson(edgeTypes));
+//                    ctx.result(gson.toJson(type));
 //                })
                 .get("/api/v1/collections", ctx -> {
                     ctx.contentType("application/json");

@@ -21,8 +21,8 @@ workflow {
 
     neo_db = create_neo(neo_nodes_files.collect() + neo_edges_files.collect() + ids_csv)
 
-    solr_tgz = package_solr( Channel.fromPath("${params.tmp}/${params.config}/*/solr_cores/*").collect())
-    rocks_tgz = package_rocks( Channel.fromPath("${params.tmp}/${params.config}/*/*_rocksdb").collect())
+    solr_tgz = package_solr( Channel.fromPath("${params.tmp}/${params.config}/*/solr_cores/*", type: 'dir').collect())
+    rocks_tgz = package_rocks( Channel.fromPath("${params.tmp}/${params.config}/*/*_rocksdb", type: 'dir').collect())
 
     neo_tgz = package_neo(neo_db)
 
@@ -39,7 +39,7 @@ workflow {
 
 process create_combined_neo_ids_csv {
     cache "lenient"
-    memory "8 GB" 
+    memory "4 GB" 
     time "8h"
     cpus "8"
 
@@ -61,9 +61,8 @@ process create_combined_neo_ids_csv {
 
 process create_neo {
     cache "lenient"
-    memory "50 GB" 
+    memory "4 GB" 
     time "8h"
-    cpus "16"
 
     publishDir "${params.tmp}/${params.config}", overwrite: true
 
@@ -85,9 +84,9 @@ process create_neo {
 
 process package_neo {
     cache "lenient"
-    memory "16 GB" 
+    memory "4 GB" 
     time "8h"
-    cpus "16"
+    cpus "8"
 
     publishDir "${params.tmp}/${params.config}", overwrite: true
 
@@ -105,9 +104,9 @@ process package_neo {
 
 process package_rocks {
     cache "lenient"
-    memory "16 GB" 
+    memory "4 GB" 
     time "8h"
-    cpus "16"
+    cpus "8"
 
     publishDir "${params.tmp}/${params.config}", overwrite: true
 
@@ -125,9 +124,9 @@ process package_rocks {
 
 process package_solr {
     cache "lenient"
-    memory "16 GB" 
+    memory "4 GB" 
     time "8h"
-    cpus "16"
+    cpus "8"
 
     publishDir "${params.tmp}/${params.config}", overwrite: true
 

@@ -25,6 +25,8 @@ def main():
     port = sys.argv[2]
     mem = sys.argv[3]
 
+    print(f"solr_import.dockerpy: core {core}, port {port}, mem {mem}")
+
     os.chdir('/opt/solr')
 
     core_data_path = f"/var/solr/data/{core}"
@@ -39,17 +41,19 @@ def main():
     os.environ['SOLR_ENABLE_REMOTE_STREAMING'] = 'true'
     os.environ['SOLR_SECURITY_MANAGER_ENABLED'] = 'false'
 
-    subprocess.run(['solr', 'start', '-m', mem, '-p', port, '-noprompt', '-force'])
+    cmd = ['solr', 'start', '-m', mem, '-p', port, '-noprompt', '-force']
+    print(' '.join(cmd))
+    subprocess.run(cmd)
 
-    time.sleep(5)
+    time.sleep(30)
 
-    subprocess.run(['wait-for-solr.sh', '--solr-url', f"http://localhost:{port}/solr/{core}/select?q=*:*"])
+    subprocess.run(['wait-for-solr.sh', '--solr-url', f"http://localhost:{port}"])
 
-    time.sleep(5)
+    time.sleep(30)
 
-    if core == "grebi_autocomplete":
+    if "_autocomplete" in core:
         print("Uploading names.txt")
-        response = session.get(f"http://localhost:{port}/solr/grebi_autocomplete/update",
+        response = session.get(f"http://localhost:{port}/solr/{core}/update",
                                 params={
                                     'stream.file': '/names.txt',
                                     'fieldnames': 'label',
@@ -61,8 +65,15 @@ def main():
 
     else:
         filenames = glob.glob('/mnt/*.jsonl')
+        print("ls /mnt")
+        os.system("ls -hl /mnt")
+        dbg_filenames=','.join(filenames)
+        print(f"Found filenames: {dbg_filenames}")
+        filenames_exist = list(filter(os.path.exists, filenames))
+        dbg_filenames2=','.join(filenames_exist)
+        print(f"Existing filenames: {dbg_filenames2}")
         with ThreadPoolExecutor(max_workers=WORKERS) as executor:
-            futures = [executor.submit(upload_file, core, port, filename) for filename in filenames if os.path.exists(filename)]
+            futures = [executor.submit(upload_file, core, port, filename) for filename in filenames]
         
         time.sleep(5)
         response = session.get(f"http://127.0.0.1:{port}/solr/{core}/update",

@@ -17,7 +17,7 @@ export default class GraphEdge extends GraphNodeRef {
     }
 
     getFrom():GraphNodeRef {
-        return new GraphNodeRef( this.props['grebi:from'] )
+        return new GraphNodeRef( this.props['from'] )
     }
 
     getType():string {
@@ -25,7 +25,7 @@ export default class GraphEdge extends GraphNodeRef {
     }
 
     getTo():GraphNodeRef {
-        return new GraphNodeRef( this.props['grebi:to'] )
+        return new GraphNodeRef( this.props['to'] )
     }
 
     getDatasources(): string[] {

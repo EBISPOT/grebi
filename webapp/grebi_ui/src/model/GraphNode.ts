@@ -57,7 +57,7 @@ export default class GraphNode extends GraphNodeRef {
             'grebi:name',
             'grebi:synonym',
             'grebi:description',
-            'grebi:type'
+            'grebi:displayType'
         ].filter(k => {
             if(keys.indexOf(k) !== -1) {
                 keys.splice(keys.indexOf(k), 1)

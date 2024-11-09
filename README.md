@@ -10,7 +10,7 @@ The resulting transient databases can be downloaded from https://ftp.ebi.ac.uk/p
 | ---------- | ------ | --- | --- | --- |
 | `ebi_monarch_xspecies` | All datasources with cross-species phenotype matches merged | ~130m | ~850m | ~900 GB |
 | `ebi_monarch` | All datasources with cross-species phenotype matches separated | | | |
-| `impc_x_gwas` | Limited to data from IMPC, GWAS Catalog, and related ontologies and mappings | |  |  |
+| `impc_x_gwas` | Limited to data from IMPC, GWAS Catalog, and related ontologies and mappings | ~30m |  ~184m |  |
 
 Note that the purpose of this pipeline is not to supply another knowledge graph, but to facilitate querying and analysis across existing ones. Consequently the above databases should be considered temporary and are subject to be removed and/or replaced with new ones without warning.
 

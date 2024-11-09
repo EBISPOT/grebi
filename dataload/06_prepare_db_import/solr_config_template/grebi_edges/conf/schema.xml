@@ -118,6 +118,9 @@
     <field name="grebi__fromNodeId" type="string" indexed="true" stored="true" required="true" multiValued="false" />
     <field name="grebi__fromSourceIds" type="string" indexed="true" stored="true" required="false" multiValued="true" />
     <field name="grebi__toNodeId" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="grebi__type" type="string" indexed="true" stored="true" required="false" multiValued="true" />
+    <copyField source="grebi__type" dest="str_grebi__type"/>
+    <copyField source="grebi__type" dest="lowercase_grebi__type"/>
     <field name="grebi__datasources" type="string" indexed="true" stored="true" required="false" multiValued="true" />
     <copyField source="grebi__datasources" dest="str_grebi__datasources"/>
     <copyField source="grebi__datasources" dest="lowercase_grebi__datasources"/>

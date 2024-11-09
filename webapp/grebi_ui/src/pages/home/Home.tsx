@@ -34,7 +34,7 @@ export default function Home() {
           <div className="lg:col-span-3">
             <div className="bg-gradient-to-r from-neutral-light to-white rounded-lg my-8 p-8">
               <div className="text-3xl mb-4 text-neutral-black font-bold">
-                Welcome to the EMBL-EBI Knowledge Graph
+                Welcome to the EMBL-EBI Knowledge Graph Interface
               </div>
               {subgraphs && subgraph ?
                 <Fragment>
@@ -96,10 +96,13 @@ export default function Home() {
           </div>
           <div>
                 <p className="mb-3">
-                  This website enables you to search and explore data from <Link className="link-default" to="/datasources">multiple EBI resources</Link> and the <Link className="link-default" to="https://monarchinitiative.org/">MONARCH Initiative KG</Link>. It combines data exports from each resource with rich ontology relationships loaded from <Link className="link-default" to="https://www.ebi.ac.uk/ols4">OLS</Link> and <Link className="link-default" to="https://github.com/INCATools/ubergraph">UberGraph</Link>.
+                  This website enables you to search and explore data from multiple EBI resources, linked together using knowledge graphs including the <Link className="link-default" to="https://monarchinitiative.org/">MONARCH Initiative KG</Link> and <Link className="link-default" to="https://robokop.renci.org/api-docs/docs/automat/robokop-kg">ROBOKOP</Link> and ontology relationships from <Link className="link-default" to="https://www.ebi.ac.uk/ols4">OLS</Link> and <Link className="link-default" to="https://github.com/INCATools/ubergraph">UberGraph</Link>.
+                </p>
+                <p className="mb-3">
+                  GrEBI is a very early work in progress. No querying interface is currently provided other than simple search/browsing functionality. If you are interested in querying GrEBI and/or have a potential application please <Link className="link-default" to="mailto:jmcl@ebi.ac.uk">get in touch</Link>.
                 </p>
                 <p>
-                  The KG is a very early work in progress. No querying interface is currently provided other than simple search/browsing functionality. If you are interested in querying the KG and/or have a potential application please <Link className="link-default" to="mailto:jmcl@ebi.ac.uk">get in touch</Link>.
+                  For source code and more information see the <Link className="link-default" to="https://github.com/EBISPOT/GrEBI">GrEBI GitHub repository</Link>.
                 </p>
           </div>
       </main>

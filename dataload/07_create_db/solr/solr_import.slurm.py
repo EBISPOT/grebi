@@ -32,8 +32,7 @@ def main():
             'singularity run',
             '--env PYTHONUNBUFFERED=TRUE',
             '--env NO_PROXY=localhost',
-        # ] + list(map(lambda f: "--bind " + os.path.abspath(f) + ":/mnt/" + os.path.basename(f), glob.glob(args.in_data + "/solr_*"))) + [
-            '--bind ' + os.path.abspath(".") + ':/mnt',
+        ] + list(map(lambda f: "--bind " + os.path.abspath(f) + ":/mnt/" + os.path.basename(f), glob.glob(args.in_data + "/solr_*"))) + [
             ('--bind ' + os.path.abspath(args.in_names_txt) + ':/names.txt') if args.in_names_txt != None else '',
             '--bind ' + os.path.abspath(args.solr_config) + ':/config',
             '--bind ' + os.path.abspath(args.out_path) + ':/var/solr',
@@ -50,8 +49,7 @@ def main():
             '--user="$(id -u):$(id -g)" '
             '-e PYTHONUNBUFFERED=TRUE',
             '-e NO_PROXY=localhost',
-        #] + list(map(lambda f: "-v " + os.path.abspath(f) + ":/mnt/" + os.path.basename(f), glob.glob(args.in_data + "/solr_*"))) + [
-            '-v ' + os.path.abspath(".") + ':/mnt',
+        ] + list(map(lambda f: "-v " + os.path.abspath(f) + ":/mnt/" + os.path.basename(f), glob.glob(args.in_data + "/solr_*"))) + [
             ('-v ' + os.path.abspath(args.in_names_txt) + ':/names.txt') if args.in_names_txt != None else '',
             '-v ' + os.path.abspath(args.solr_config) + ':/config',
             '-v ' + os.path.abspath(args.out_path) + ':/var/solr',

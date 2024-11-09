@@ -2,13 +2,13 @@
 export class Ref {
 	nodeId:string
 	type:string[]
-	id:string[]
+	sourceIds:string[]
 	name:string[]
 
 	constructor(obj:any) {
 		this.nodeId = obj['grebi:nodeId']
 		this.type = obj['grebi:type']
-		this.id = obj['id']
+		this.sourceIds = obj['grebi:sourceIds']
 		this.name = obj['grebi:name']
 	}
 }
