@@ -27,23 +27,52 @@ public class GrebiApi {
 
     public static void main(String[] args) throws ParseException, org.apache.commons.cli.ParseException, IOException {
 
-        final GrebiNeoRepo neo = new GrebiNeoRepo();
-        final GrebiSolrRepo solr = new GrebiSolrRepo();
-        final GrebiSummaryRepo summary = new GrebiSummaryRepo();
+        GrebiNeoRepo neo;
+        GrebiSolrRepo solr;
+        GrebiSummaryRepo summary;
 
-        Gson gson = new Gson();
+        Set<String> rocksDbSubgraphs = null;
+        Set<String> solrSubgraphs = null;
+        Set<String> summarySubgraphs = null;
 
-        var stats = neo.getStats();
-
-        var rocksDbSubgraphs = (new ResolverClient()).getSubgraphs();
-        var solrSubgraphs = solr.getSubgraphs();
-        var summarySubgraphs = summary.getSubgraphs();
-
-        if(new HashSet<>(List.of(rocksDbSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
-            throw new RuntimeException("RocksDB/Solr/the summary jsons do not seem to contain the same subgraphs. Found: " + String.join(",", rocksDbSubgraphs) + " for RocksDB (from resolver service) and " + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and " + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server)");
+        while(true) {
+            try {
+                neo = new GrebiNeoRepo();
+                solr = new GrebiSolrRepo();
+                summary = new GrebiSummaryRepo();
+                rocksDbSubgraphs = (new ResolverClient()).getSubgraphs();
+                solrSubgraphs = solr.getSubgraphs();
+                summarySubgraphs = summary.getSubgraphs();
+                if(new HashSet<>(List.of(rocksDbSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
+                    throw new RuntimeException("RocksDB/Solr/the summary jsons do not seem to contain the same subgraphs. Found: " + String.join(",", rocksDbSubgraphs) + " for RocksDB (from resolver service) and " + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and " + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server)");
+                }
+                break;
+            } catch(Exception e) {
+                System.out.println("Could not get subgraphs from one of the services. Retrying in 10 seconds...");
+                e.printStackTrace();
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
+            }
         }
 
         System.out.println("Found subgraphs: " + String.join(",", solrSubgraphs));
+
+        run(neo, solr, summary, solrSubgraphs);
+    }
+
+    static void run(
+        final GrebiNeoRepo neo,
+        final GrebiSolrRepo solr,
+        final GrebiSummaryRepo summary,
+        final Set<String> subgraphs
+    ) {
+
+        var stats = neo.getStats();
+
+        Gson gson = new Gson();
 
         Javalin.create(config -> {
                     config.bundledPlugins.enableCors(cors -> {
@@ -60,7 +89,7 @@ public class GrebiApi {
                 })
                 .get("/api/v1/subgraphs", ctx -> {
                     ctx.contentType("application/json");
-                    ctx.result(gson.toJson(solrSubgraphs));
+                    ctx.result(gson.toJson(subgraphs));
                 })
                 .get("/api/v1/subgraphs/{subgraph}", ctx -> {
                     ctx.contentType("application/json");

@@ -1,45 +1,58 @@
 services:
-    grebi-dataload:
-      build:
-        context: .
-        dockerfile: Dockerfile.dataload
+    grebi-ui:
+      image: ghcr.io/ebispot/grebi_ui:dev
+      ports:
+        - 8080:8080
       environment:
-        - GREBI_NFS_TMP=/work/tmp
-        - GREBI_HPS_TMP=/work/tmp
-        - GREBI_CONFIG=${GREBI_CONFIG:?}
-      command: bash -c "cd /work && ./scripts/run_pipeline_local.sh"
+        - PUBLIC_URL=/
+        - REACT_APP_APIURL=http://localhost:8090
+    grebi-api:
+      image: ghcr.io/ebispot/grebi_api:dev
+      ports:
+        - 8090:8090
+      depends_on:
+        - grebi-neo4j
+        - grebi-solr
+        - grebi-resolver-service
+        - grebi-summary-service
+      links:
+        - grebi-neo4j
+        - grebi-solr
+        - grebi-resolver-service
+        - grebi-summary-service
+      environment:
+        - GREBI_NEO4J_HOST=bolt://grebi-neo4j:7687/
+        - GREBI_SOLR_HOST=http://grebi-solr:8983/
+        - GREBI_RESOLVER_HOST=http://grebi-resolver-service:8080/
+        - GREBI_SUMMARY_HOST=http://grebi-summary-service:8081/
     grebi-neo4j:
       image: neo4j:5.18.0
       ports:
         - 7474:7474
         - 7687:7687
       volumes:
-        - grebi-neo4j-data:/var/lib/neo4j/data
+        - ${GREBI_NEO_DATA_PATH:?Need path to Neo4j data folder}:/var/lib/neo4j/data
       environment:
         - NEO4J_AUTH=none
-      depends_on:
-        grebi-dataload:
-          condition: service_completed_successfully
-    # grebi-api:
-    #   build: ./grebi_api
-    #   ports:
-    #     - 8080:8080
-    #   environment:
-    #     - GREBI_NEO4J_HOST=bolt://grebi-neo4j:7687
-    #   depends_on:
-    #     - grebi-neo4j    
-    #   links:
-    #     - grebi-neo4j 
-    # grebi-ui:
-    #   build:
-    #     context: ./grebi_ui
-    #   #env_file: ./grebi_ui/.env
-    #   ports:
-    #     - 8081:8080
-    #   depends_on:
-    #     - grebi-api
-    #   links:
-    #     - grebi-api
+        - NEO4J_PLUGINS=["apoc"]
+    grebi-solr:
+      image: solr:9.5.0
+      ports:
+        - 8983:8983
+      volumes:
+        - ${GREBI_SOLR_PATH:?Need path to Solr data}:/var/solr/data
+    grebi-resolver-service:
+      image: ghcr.io/ebispot/grebi_resolver_service:dev
+      volumes:
+        - ${GREBI_ROCKSDB_SEARCH_PATH:?Need path to search for RocksDB databases}:/rocksdbs
+      environment:
+        - GREBI_ROCKSDB_SEARCH_PATH=/rocksdbs
+    grebi-summary-service:
+      image: ghcr.io/ebispot/grebi_summary_service:dev
+      volumes:
+        - ${GREBI_SUMMARY_JSON_SEARCH_PATH:?Need path to search for summary json files}:/summaryjsons
+      environment:
+        - GREBI_SUMMARY_JSON_SEARCH_PATH=/summaryjsons
 volumes:
     grebi-neo4j-data:
 
