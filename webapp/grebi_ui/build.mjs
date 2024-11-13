@@ -27,7 +27,7 @@ fs.writeFileSync(
 ///
 console.log("### Building bundle.js");
 build({
-  entryPoints: ["src/index.tsx"],
+  entryPoints: [`src/index_${process.env.GREBI_FRONTEND}.tsx`],
   bundle: true,
   platform: "browser",
   outfile: "dist/bundle.js",
@@ -47,7 +47,7 @@ build({
 /// Build styles.css (tailwind)
 ///
 console.log("### Building styles.css");
-exec("tailwind -i ./src/index.css -o ./dist/styles.css");
+exec(`tailwind -i ./src/styles_${process.env.GREBI_FRONTEND}.css -o ./dist/styles.css`);
 
 ///
 /// Copy files

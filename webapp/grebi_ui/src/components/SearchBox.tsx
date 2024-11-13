@@ -22,11 +22,13 @@ export default function SearchBox({
   initialQuery,
   placeholder,
   collectionId,
+  showExact,
 }: {
   subgraph:string,
   initialQuery?: string;
   placeholder?: string;
   collectionId?: string;
+  showExact?: boolean;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   //   let lang = searchParams.get("lang") || "en";
@@ -315,7 +317,7 @@ export default function SearchBox({
             </button>
           </div>
         </div>
-        <div className="col-span-2">
+        {showExact !== false && <div className="col-span-2">
           <ThemeProvider theme={theme}>
             <FormControlLabel
               control={
@@ -327,7 +329,7 @@ export default function SearchBox({
               label="Exact match"
             />
           </ThemeProvider>
-        </div>
+        </div>}
       </div>
     </Fragment>
   );

@@ -43,12 +43,16 @@ services:
         - ${GREBI_SOLR_PATH:?Need path to Solr data}:/var/solr/data
     grebi-resolver-service:
       image: ghcr.io/ebispot/grebi_resolver_service:dev
+      ports:
+        - 8080:8080
       volumes:
         - ${GREBI_ROCKSDB_SEARCH_PATH:?Need path to search for RocksDB databases}:/rocksdbs
       environment:
         - GREBI_ROCKSDB_SEARCH_PATH=/rocksdbs
     grebi-summary-service:
       image: ghcr.io/ebispot/grebi_summary_service:dev
+      ports:
+        - 8081:8081
       volumes:
         - ${GREBI_SUMMARY_JSON_SEARCH_PATH:?Need path to search for summary json files}:/summaryjsons
       environment:
