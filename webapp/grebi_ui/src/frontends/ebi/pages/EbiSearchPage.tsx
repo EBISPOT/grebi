@@ -9,6 +9,7 @@ import LoadingOverlay from "../../../components/LoadingOverlay";
 import SearchBox from "../../../components/SearchBox";
 import GraphNode from "../../../model/GraphNode";
 import EbiHeader from "../EbiHeader";
+import CollapsingIdList from "../../../components/CollapsingIdList";
 
 export default function EbiSearchPage() {
   const [searchParams] = useSearchParams();
@@ -334,11 +335,7 @@ export default function EbiSearchPage() {
                     }
             <DatasourceTags dss={graphNode.getDatasources()} />
                     </div>
-                      <div className="my-1 leading-relaxed">
-                {graphNode.getIds().map(id => <span
-className="bg-grey-default rounded-sm font-mono py-1 px-1 mr-1 text-sm"
->{id.value}</span>)}
-                      </div>
+                    <CollapsingIdList ids={graphNode.getSourceIds()} />
                       {graphNode.getDescription() && (
                       <div className="my-1 leading-relaxed">
                         {graphNode.getDescription()}

@@ -99,8 +99,10 @@ public class GrebiApi {
                     ctx.contentType("application/json");
                     ctx.result("{}");
 
+                    String nodeId = new String(Base64.getUrlDecoder().decode(ctx.pathParam("nodeId")));
+
                     var q = new GrebiSolrQuery();
-                    q.addFilter("grebi:nodeId", List.of(ctx.pathParam("nodeId")), SearchType.WHOLE_FIELD, false);
+                    q.addFilter("grebi:nodeId", List.of(nodeId), SearchType.WHOLE_FIELD, false);
 
                     var res = solr.getFirstNode(ctx.pathParam("subgraph"), q);
 

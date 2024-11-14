@@ -19,6 +19,7 @@ import PropTable from "../../../components/node_prop_table/PropTable";
 import SearchBox from "../../../components/SearchBox";
 import GraphNode from "../../../model/GraphNode";
 import { get, getPaginated } from "../../../app/api";
+import encodeNodeId from "../../../encodeNodeId";
 
 
 export default function EbiNodePage() {
@@ -33,7 +34,7 @@ export default function EbiNodePage() {
 
   useEffect(() => {
     async function getNode() {
-      let graphNode = new GraphNode(await get<any>(`api/v1/subgraphs/${subgraph}/nodes/${nodeId}?lang=${lang}`))
+      let graphNode = new GraphNode(await get<any>(`api/v1/subgraphs/${subgraph}/nodes/${encodeNodeId(nodeId)}?lang=${lang}`))
       setNode(graphNode)
     }
     getNode()
@@ -61,9 +62,9 @@ export default function EbiNodePage() {
         <div className="text-center">
         <Typography variant="h5">{pageTitle} {
           node.extractType()?.long && <span style={{textTransform:'uppercase', fontVariant:'small-caps',fontWeight:'bold',fontSize:'small',verticalAlign:'middle',marginLeft:'12px'}}>{node.extractType()?.long}</span>}</Typography>
-                      <Grid item xs={10} className="pt-2">
-                {props['id'].map(id => <span
-className="bg-grey-default rounded-sm font-mono py-1 pl-2 ml-1 my-1 mb-2 text-sm"
+                      <div>
+                {node.getSourceIds().map(id => <span
+className="bg-grey-default rounded-sm font-mono py-1 pl-2 ml-1 my-2 text-sm"
 >{id.value}
 <button
                     onClick={() => {
@@ -74,7 +75,7 @@ className="bg-grey-default rounded-sm font-mono py-1 pl-2 ml-1 my-1 mb-2 text-sm
                     <i className="icon icon-common icon-copy icon-spacer" />
                   </button>
 </span>)}
-              </Grid>
+              </div>
           </div>
         <Typography>{pageDesc}</Typography>
         <Grid container spacing={1} direction="row">

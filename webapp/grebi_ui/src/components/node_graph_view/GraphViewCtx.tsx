@@ -254,7 +254,7 @@ padding: '8px',
     async loadShallow(node:GraphNodeRef) {
 
         let [incomingEdgeFacets,outgoingEdgeFacets] = (await Promise.all([
-            getPaginated<GraphEdge>(`api/v1/subgraphs/${this.subgraph}/nodes/${node.getNodeId()}/incoming_edges?` +
+            getPaginated<GraphEdge>(`api/v1/subgraphs/${this.subgraph}/nodes/${node.getEncodedNodeId()}/incoming_edges?` +
                 new URLSearchParams([
                     ['size', '1'],
                     ['facet', 'grebi:type'],
@@ -262,7 +262,7 @@ padding: '8px',
                     ...Array.from(this.dsExclude).map(ds => ['-grebi:datasources', ds])
                 ] as any)
             ),
-            getPaginated<GraphEdge>(`api/v1/subgraphs/${this.subgraph}/nodes/${node.getNodeId()}/outgoing_edges?` +
+            getPaginated<GraphEdge>(`api/v1/subgraphs/${this.subgraph}/nodes/${node.getEncodedNodeId()}/outgoing_edges?` +
                 new URLSearchParams([
                     ['size', '1'],
                     ['facet', 'grebi:type'],

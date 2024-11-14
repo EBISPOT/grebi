@@ -36,7 +36,7 @@ export default class GraphNode extends GraphNodeRef {
         let allIdentifiers = [
             ...this.getNames().map(p => p.value),
             ...this.getSynonyms().map(p => p.value),
-            ...this.getIds().map(p => p.value),
+            ...this.getSourceIds().map(p => p.value),
         ];
         return allIdentifiers.indexOf(q) !== -1
     }

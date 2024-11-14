@@ -335,7 +335,7 @@ export default function EbiSearchPage() {
             <DatasourceTags dss={graphNode.getDatasources()} />
                     </div>
                       <div className="my-1 leading-relaxed">
-                {graphNode.getIds().map(id => <span
+                {graphNode.getSourceIds().map(id => <span
 className="bg-grey-default rounded-sm font-mono py-1 px-1 mr-1 text-sm"
 >{id.value}</span>)}
                       </div>

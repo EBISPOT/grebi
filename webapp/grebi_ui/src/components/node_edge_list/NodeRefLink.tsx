@@ -12,7 +12,7 @@ export default function NodeRefLink({
 }) {
     let type = nodeRef.extractType()
 
-    return <Link to={`/subgraphs/${subgraph}/nodes/${encodeNodeId(nodeRef.getNodeId())}`}>
+    return <Link to={`/subgraphs/${subgraph}/nodes/${nodeRef.getEncodedNodeId()}`}>
         {nodeRef.getName()}
         {type && <NodeTypeChip type={type} />}
         {/* <br/>

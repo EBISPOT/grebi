@@ -54,18 +54,27 @@ export function toCamel(str: string) {
 
 
 export function pickBestDisplayName(names:string[]):string|undefined {
-  return names.slice(0).sort((a, b) => score(b) - score(a))[0]
-  function score(name) {
-    let n = 0
-    for (let c of name) {
-      if (c.match(/[A-Za-z ]/)) {
-        n++
-      } else {
-        n-=10
-      }
+  return sortDisplayNamesByReadability(names)[0]
+}
+
+export function pickWorstDisplayName(names:string[]):string|undefined {
+  return sortDisplayNamesByReadability(names).pop()
+}
+
+export function sortDisplayNamesByReadability(names:string[]):string[] {
+  return names.slice(0).sort((a, b) => readabilityScore(b) - readabilityScore(a))
+}
+
+export function readabilityScore(name:string) {
+  let n = 0
+  for (let c of name) {
+    if (c.match(/[A-Za-z ]/)) {
+      n++
+    } else {
+      n-=10
     }
-    return n
   }
+  return n
 }
 
 export function difference(a:any[], b:any[]) {

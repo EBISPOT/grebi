@@ -1,6 +1,7 @@
 
 import PropVal from "./PropVal";
-import { pickBestDisplayName } from "../app/util";
+import { pickBestDisplayName, pickWorstDisplayName, readabilityScore } from "../app/util";
+import encodeNodeId from "../encodeNodeId";
 
 export default class GraphNodeRef {
 
@@ -12,6 +13,10 @@ export default class GraphNodeRef {
 
     getNodeId():string {
         return this.props['grebi:nodeId']
+    }
+
+    getEncodedNodeId():string {
+        return encodeNodeId(this.props['grebi:nodeId'])
     }
 
     getDatasources():string[] {
@@ -39,8 +44,32 @@ export default class GraphNodeRef {
         return this.props['grebi:type']
     }
 
-    getIds():PropVal[] {
-        return PropVal.arrFrom(this.props['id'])
+    getSourceIds():PropVal[] {
+        let sids:PropVal[] = PropVal.arrFrom(this.props['grebi:sourceIds'])
+
+        // this sort order will ultimately be used in display
+        // ideally we will see one ID from each datasource at the beginning
+        // to give an idea of how many sources; and also we prefer numeric
+        // identifiers since this is explicitly supposed to be identifiers and
+        // will probably be displayed next to the readable name.
+
+        let res:PropVal[] = []
+
+        for(let ds of this.getDatasources()) {
+            let matches = sids.filter(sid => sid.datasources.indexOf(ds) !== -1)
+            if(matches.length > 0) {
+                res.push(matches.sort((a, b) => { return numericScore(b.value) - numericScore(a.value) })[0])
+            }
+        }
+
+        let remainder = sids.filter(sid => res.indexOf(sid) === -1)
+        remainder.sort((a, b) => { return numericScore(b.value) - numericScore(a.value) })
+
+        return [...res, ...remainder]
+
+        function numericScore(s:string):number {
+            return [...s].filter(c => c.match(/[0-9]/)).length
+        }
     }
 
 

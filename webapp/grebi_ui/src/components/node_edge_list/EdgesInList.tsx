@@ -38,7 +38,7 @@ export default function EdgesInList(params:{
         async function getEdges() {
             console.log('refreshing ', node.getNodeId(), JSON.stringify(dsEnabled), JSON.stringify(edgesState?.datasources))
             setLoading(true)
-            let res = (await getPaginated<any>(`api/v1/subgraphs/${subgraph}/nodes/${node.getNodeId()}/incoming_edges?${
+            let res = (await getPaginated<any>(`api/v1/subgraphs/${subgraph}/nodes/${node.getEncodedNodeId()}/incoming_edges?${
                 new URLSearchParams([
                     ['page', page],
                     ['size', rowsPerPage],
