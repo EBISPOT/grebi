@@ -110,6 +110,7 @@ public class GrebiApi {
                     ctx.result(gson.toJson(res));
                 })
                 .get("/api/v1/subgraphs/{subgraph}/nodes/{nodeId}/incoming_edges", ctx -> {
+                    var nodeId = new String(Base64.getUrlDecoder().decode(ctx.pathParam("nodeId")));
                     var page_num = Objects.requireNonNullElse(ctx.queryParam("page"), "0");
                     var size = Objects.requireNonNullElse(ctx.queryParam("size"), "10");
                     var sortBy = Objects.requireNonNullElse(ctx.queryParam("sortBy"), "grebi:type");
@@ -123,7 +124,7 @@ public class GrebiApi {
                         q.addFacetField(facet);
                     }
 
-                    q.addFilter("grebi:to", Set.of(ctx.pathParam("nodeId")),
+                    q.addFilter("grebi:toNodeId", Set.of(nodeId),
                            /* this is actually a string field so this is an exact match */ SearchType.CASE_INSENSITIVE_TOKENS,
                            false);
 
@@ -158,6 +159,7 @@ public class GrebiApi {
                    );
                 })
                 .get("/api/v1/subgraphs/{subgraph}/nodes/{nodeId}/outgoing_edges", ctx -> {
+                    var nodeId = new String(Base64.getUrlDecoder().decode(ctx.pathParam("nodeId")));
                     var page_num = Objects.requireNonNullElse(ctx.queryParam("page"), "0");
                     var size = Objects.requireNonNullElse(ctx.queryParam("size"), "10");
                     var sortBy = Objects.requireNonNullElse(ctx.queryParam("sortBy"), "grebi:type");
@@ -171,7 +173,7 @@ public class GrebiApi {
                         q.addFacetField(facet);
                     }
 
-                    q.addFilter("grebi:fromNodeId", Set.of(ctx.pathParam("nodeId")),
+                    q.addFilter("grebi:fromNodeId", Set.of(nodeId),
                             /* this is actually a string field so this is an exact match */ SearchType.CASE_INSENSITIVE_TOKENS,
                             false);
 

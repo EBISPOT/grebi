@@ -59,25 +59,20 @@ export default function EbiNodePage() {
         </Helmet>
       <main className="container mx-auto px-4 pt-1">
         <SearchBox subgraph={subgraph} />
-        <div className="text-center">
+        <div className="text-center pb-2">
         <Typography variant="h5">{pageTitle} {
           node.extractType()?.long && <span style={{textTransform:'uppercase', fontVariant:'small-caps',fontWeight:'bold',fontSize:'small',verticalAlign:'middle',marginLeft:'12px'}}>{node.extractType()?.long}</span>}</Typography>
-                      <div>
-                {node.getSourceIds().map(id => <span
-className="bg-grey-default rounded-sm font-mono py-1 pl-2 ml-1 my-2 text-sm"
->{id.value}
-<button
-                    onClick={() => {
-                      copyToClipboard(id.value);
-                    }}
-                  >
-                    &nbsp;
-                    <i className="icon icon-common icon-copy icon-spacer" />
-                  </button>
-</span>)}
-              </div>
-          </div>
-        <Typography>{pageDesc}</Typography>
+        </div>
+                    <Grid container spacing={0.5} direction="row" alignItems={"center"} justifyContent={"center"} className="pb-2">
+              {node.getSourceIds().map(id => <Grid item>
+                <div className="bg-grey-default rounded-sm font-mono pl-1" style={{fontSize:'x-small'}}>
+                {id.value} <button onClick={() => { copyToClipboard(id.value); }} >
+                  <i className="icon icon-common icon-copy icon-spacer" />
+                </button>
+                </div>
+</Grid>)}
+            </Grid>
+        <Typography className="text-center pb-2">{pageDesc}</Typography>
         <Grid container spacing={1} direction="row">
             <Grid item xs={2}>
           <Tabs orientation="vertical" variant="scrollable" value={tab} aria-label="basic tabs example" className="border-green" sx={{ borderRight: 1, borderColor: 'divider' }} onChange={(e, tab) => setSearchParams({tab})}>
