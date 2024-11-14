@@ -11,15 +11,16 @@ for (const k in process.env) {
 /// Build index.html (simple find and replace)
 ///
 console.log("### Building index.html");
+var public_url = process.env.PUBLIC_URL.endsWith("/") ? process.env.PUBLIC_URL : process.env.PUBLIC_URL + "/";
 fs.writeFileSync(
   "dist/index.html",
   fs
     .readFileSync("index.html.in")
     .toString()
     .split("%PUBLIC_URL%/")
-    .join(process.env.PUBLIC_URL || "/")
+    .join(public_url || "/")
     .split("%PUBLIC_URL%")
-    .join(process.env.PUBLIC_URL || "/")
+    .join(public_url || "/")
 );
 
 ///
