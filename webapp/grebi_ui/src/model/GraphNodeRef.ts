@@ -8,6 +8,9 @@ export default class GraphNodeRef {
     props:any
 
     constructor(props:any) {
+        if(!props) {
+            throw new Error("GraphNodeRef constructor but props are null")
+        }
         this.props = props
     }
 

@@ -1,21 +1,8 @@
-
-export class Ref {
-	nodeId:string
-	type:string[]
-	sourceIds:string[]
-	name:string[]
-
-	constructor(obj:any) {
-		this.nodeId = obj['grebi:nodeId']
-		this.type = obj['grebi:type']
-		this.sourceIds = obj['grebi:sourceIds']
-		this.name = obj['grebi:name']
-	}
-}
+import GraphNodeRef from "./GraphNodeRef"
 
 export default class Refs {
 
-	refs:{ [key:string]:Ref }
+	refs:{ [key:string]:GraphNodeRef }
 
 	constructor(refs:any) {
 		if(refs)
@@ -31,7 +18,7 @@ export default class Refs {
 			return new Refs({ ...this.refs })
 	}
 
-	get(iri:string):Ref|undefined {
-		return this.refs[iri] && new Ref(this.refs[iri])
+	get(iri:string):GraphNodeRef|undefined {
+		return this.refs[iri] && new GraphNodeRef(this.refs[iri])
 	}
 }

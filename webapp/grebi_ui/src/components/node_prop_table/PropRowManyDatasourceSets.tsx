@@ -6,6 +6,7 @@ import PropLabel from "./PropLabel";
 import GraphNode from "../../model/GraphNode";
 import PropVal from "../../model/PropVal";
 import { DatasourceTags } from "../DatasourceTag";
+import isSingleLineProp from "./isSingleLineProp";
 
 export default function PropRowManyDatasourceSets(params:{subgraph:string,node:GraphNode,prop:string,values:PropVal[],datasources:string[],dsEnabled:string[]}) {
 
@@ -18,9 +19,13 @@ export default function PropRowManyDatasourceSets(params:{subgraph:string,node:G
     }
     let dsSetsSorted = Array.from(dsSetToVals.keys()).sort((a:string, b:string) => b.length - a.length)
 
-    let allSingleValues = Array.from(dsSetToVals.values()).filter(v => v.length > 1).length === 0;
+    let allSingleOneLineValues = Array.from(dsSetToVals.values())
+            .filter(vals => vals.length === 1)
+            .map(vals => vals[0])
+            .filter(val => isSingleLineProp(val))
+            .length === Array.from(dsSetToVals.values()).length;
 
-    if(allSingleValues) {
+    if(allSingleOneLineValues) {
       return (
           <Fragment>
                 <Grid item xs={12} style={{overflow:'hidden',padding:'8px'}} className="bg-gradient-to-r from-neutral-light to-white rounded-lg">
@@ -31,10 +36,8 @@ export default function PropRowManyDatasourceSets(params:{subgraph:string,node:G
                     let values = dsSetToVals.get(dsSet) || []
                       return <Fragment>
                       <Grid item xs={12} style={{padding:'8px'}}>
-                        <div className="pl-2">
                         <DatasourceTags dss={values[0].datasources} />
                         <PropVals subgraph={subgraph} node={node} prop={prop} values={values} />
-                        </div>
                       </Grid>
                     </Fragment>
                   })
@@ -52,7 +55,7 @@ export default function PropRowManyDatasourceSets(params:{subgraph:string,node:G
                     let values = dsSetToVals.get(dsSet) || []
                       return <Fragment>
                         <Grid item xs={12}>
-                          <div className="pl-2">
+                          <div className="pl-0">
                           <DatasourceTags dss={values[0].datasources} />
                           </div>
                         </Grid>

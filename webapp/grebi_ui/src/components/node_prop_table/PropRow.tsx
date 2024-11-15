@@ -21,7 +21,7 @@ export default function PropRow(params:{subgraph:string,node:GraphNode,prop:stri
 
       // if no values after filtering, nothing to display
       if(values.length === 0) {
-        return <Fragment></Fragment>
+        return null
       }
 
       // if only 1 datasource is enabled, no need to display datasource labels anywhere

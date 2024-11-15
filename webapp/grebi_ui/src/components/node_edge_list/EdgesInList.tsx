@@ -71,7 +71,9 @@ export default function EdgesInList(params:{
     }
 
     return <div>
+        <div className="pb-5">
         <DatasourceSelector datasources={edgesState.datasources} dsEnabled={dsEnabled!==null?dsEnabled:edgesState.datasources} setDsEnabled={setDsEnabled} />
+        </div>
         { loading && <LoadingOverlay message="Loading edges..." /> }
         <DataTable columns={[
                 {

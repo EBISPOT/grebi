@@ -1322,6 +1322,19 @@ filter: gray;
   border-bottom: 1px dashed black;
 }
 
+
+.Mui-selected {
+  color: rgb(115 35 183) !important;
+}
+.MuiTabs-indicator {
+  background-color: rgb(115 35 183) !important;
+}
+
+.MuiSvgIcon-colorPrimary {
+  color: rgb(115 35 183) !important;
+}
+
+
 .link-datasource {
   cursor: pointer;
   --tw-bg-opacity: 1;
@@ -1383,3 +1396,4 @@ filter: gray;
   margin-left: 0.25rem;
   margin-right: 0.25rem;
 }
+

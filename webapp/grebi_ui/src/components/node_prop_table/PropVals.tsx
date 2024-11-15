@@ -5,13 +5,14 @@ import encodeNodeId from "../../encodeNodeId";
 import GraphNode from "../../model/GraphNode";
 import PropVal from "../../model/PropVal";
 import ClassExpression from "../ClassExpression";
+import isSingleLineProp from "./isSingleLineProp";
 
 export default function PropVals(params:{ subgraph:string,node:GraphNode,prop:string,values:PropVal[] }) {
 
     let { subgraph,node, prop, values } = params;
 
     // if all values are <= 32 characters use one line and possibly monospace (if not links)
-    let oneLine = values.filter(v => v.value.toString().length > 48).length == 0;
+    let oneLine = values.filter(v => !isSingleLineProp(v)).length === 0;
 
     if(oneLine) {
         return (
@@ -28,9 +29,10 @@ export default function PropVals(params:{ subgraph:string,node:GraphNode,prop:st
         return (
             <div>
                 {
-                    values.map( (value,i) => <p>
+                    values.map( (value,i) => 
+                        <div className={i>0?"pt-1":""}>
                         <PropValue subgraph={subgraph} node={node} prop={prop} value={value} monospace={false} separator="" />
-                        </p>
+                        </div>
                     )
                 }
                 </div>

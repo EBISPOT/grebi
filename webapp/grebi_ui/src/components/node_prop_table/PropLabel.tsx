@@ -22,11 +22,11 @@ export default function PropLabel(params:{prop:string,refs:Refs}) {
     }
 
     if(ref) {
-        displayName = pickBestDisplayName(ref.name)
+        displayName = pickBestDisplayName(ref.getNames().map(n=>n.value as string))
         if(displayName) {
                 return <b>{displayName}
                         <Tooltip
-                        title={ref.sourceIds.join('; ')}
+                        title={ref.getSourceIds().map(sid=>sid.value).join('; ')}
                         placement="top"
                         arrow
                     >

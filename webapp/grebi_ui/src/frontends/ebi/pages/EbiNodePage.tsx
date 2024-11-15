@@ -59,20 +59,24 @@ export default function EbiNodePage() {
         </Helmet>
       <main className="container mx-auto px-4 pt-1">
         <SearchBox subgraph={subgraph} />
-        <div className="text-center pb-2">
+        <div className="text-center pb-5">
         <Typography variant="h5">{pageTitle} {
           node.extractType()?.long && <span style={{textTransform:'uppercase', fontVariant:'small-caps',fontWeight:'bold',fontSize:'small',verticalAlign:'middle',marginLeft:'12px'}}>{node.extractType()?.long}</span>}</Typography>
         </div>
-                    <Grid container spacing={0.5} direction="row" alignItems={"center"} justifyContent={"center"} className="pb-2">
+
+        <div style={{width:'90%'}} className="mx-auto">
+                    <Grid container spacing={0.5} direction="row" alignItems={"center"} justifyContent={"center"} className="pb-5">
               {node.getSourceIds().map(id => <Grid item>
-                <div className="bg-grey-default rounded-sm font-mono pl-1" style={{fontSize:'x-small'}}>
+                <div className="bg-grey-default rounded-sm font-mono pl-1" style={{fontSize:'small'}}>
                 {id.value} <button onClick={() => { copyToClipboard(id.value); }} >
                   <i className="icon icon-common icon-copy icon-spacer" />
                 </button>
                 </div>
-</Grid>)}
+</Grid>
+)}
             </Grid>
-        <Typography className="text-center pb-2">{pageDesc}</Typography>
+            </div>
+        <Typography className="text-center pb-3">{pageDesc}</Typography>
         <Grid container spacing={1} direction="row">
             <Grid item xs={2}>
           <Tabs orientation="vertical" variant="scrollable" value={tab} aria-label="basic tabs example" className="border-green" sx={{ borderRight: 1, borderColor: 'divider' }} onChange={(e, tab) => setSearchParams({tab})}>
@@ -120,9 +124,9 @@ function TabPanel(props: TabPanelProps) {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
-        </Box>
+        <div className="pl-2">
+          {children}
+        </div>
       )}
     </div>
   );

@@ -27,9 +27,21 @@ export default function PropTable(params:{
     let propkeys = Object.keys(props)
     propkeys = propkeys.filter(k => k !== 'id')  
 
+    let rows:JSX.Element[] = []
+
+    for(let key of propkeys) {
+       let elem = <PropRow subgraph={subgraph} key={key} node={node} prop={key} values={props[key]} datasources={datasources} dsEnabled={dsEnabled} /> 
+       if(elem) {
+          rows.push(elem)
+          rows.push(<Grid item xs={12} style={{padding:'4px'}} />)
+       }
+    }
+
     return <Grid container spacing={1} direction="row">
+        <Grid item className="pb-5">
       <DatasourceSelector datasources={datasources} dsEnabled={dsEnabled} setDsEnabled={setDsEnabled} />
-        {propkeys.map(key => <PropRow subgraph={subgraph} key={key} node={node} prop={key} values={props[key]} datasources={datasources} dsEnabled={dsEnabled} />)}
+      </Grid>
+      {rows}
     </Grid>
 
 }
