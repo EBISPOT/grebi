@@ -12,31 +12,60 @@ import uk.ac.ebi.grebi.db.ResolverClient;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class GrebiNeoRepo {
 
-    Neo4jClient neo4jClient = new Neo4jClient();
+    static final String[] NEO4J_HOSTS =
+            System.getenv("GREBI_NEO4J_HOSTS").split(";");
+
+    public static String[] getNeo4jHosts() {
+        if(NEO4J_HOSTS != null)
+            return NEO4J_HOSTS;
+        return List.of("bolt://localhost:7687/").toArray(new String[0]);
+    }
+
+    Map<String, Neo4jClient> subgraphToClient = new HashMap<>();
+
     ResolverClient resolver = new ResolverClient();
     Gson gson = new Gson();
 
-    public GrebiNeoRepo() throws IOException {}
+    public GrebiNeoRepo() throws IOException {
+
+        for(String host : getNeo4jHosts()) {
+            Neo4jClient client = new Neo4jClient(host);
+
+            String subgraph = (String)
+                    client.rawQuery("MATCH (n:GraphNode) RETURN n.`grebi:subgraph` AS subgraph LIMIT 1")
+                        .get(0).get("subgraph");
+
+            subgraphToClient.put(subgraph, client);
+        }
+    }
+
+    private Neo4jClient getClient(String subgraph) {
+        var client = subgraphToClient.get(subgraph);
+        if(client != null)
+            return client;
+        throw new IllegalArgumentException("subgraph " + subgraph + " not found");
+    }
+
+    public Set<String> getSubgraphs() {
+        return subgraphToClient.keySet();
+    }
 
     final String STATS_QUERY = new String(GrebiApi.class.getResourceAsStream("/cypher/stats.cypher").readAllBytes(), StandardCharsets.UTF_8);
     final String INCOMING_EDGES_QUERY = new String(GrebiApi.class.getResourceAsStream("/cypher/incoming_edges.cypher").readAllBytes(), StandardCharsets.UTF_8);
 
-    public Map<String,Object> getStats() {
-        EagerResult props_res = neo4jClient.getDriver().executableQuery(STATS_QUERY).withConfig(QueryConfig.builder().withDatabase("neo4j").build()).execute();
-        return props_res.records().get(0).values().get(0).asMap();
-    }
-    public List<Record> cypher(String query, String resVar) {
-        EagerResult res = neo4jClient.getDriver().executableQuery(query).withConfig(QueryConfig.builder().withDatabase("neo4j").build()).execute();
-        return List.of();
+    public Map<String, Map<String,Object>> getStats() {
+        Map<String, Map<String,Object>> subgraphToStats = new HashMap<>();
+        for(var subgraph : subgraphToClient.keySet()) {
+            EagerResult props_res = getClient(subgraph).getDriver().executableQuery(STATS_QUERY).withConfig(QueryConfig.builder().withDatabase("neo4j").build()).execute();
+            subgraphToStats.put(subgraph, props_res.records().get(0).values().get(0).asMap());
+        }
+        return subgraphToStats;
     }
 
     public class EdgeAndNode {
@@ -48,7 +77,7 @@ public class GrebiNeoRepo {
     }
 
     public List<EdgeAndNode> getIncomingEdges(String subgraph, String nodeId, Pageable pageable) {
-        EagerResult res = neo4jClient.getDriver().executableQuery(INCOMING_EDGES_QUERY)
+        EagerResult res = getClient(subgraph).getDriver().executableQuery(INCOMING_EDGES_QUERY)
             .withParameters(Map.of(
                     "nodeId", subgraph + ":" + nodeId,
                     "offset", pageable.getOffset(),

@@ -34,17 +34,25 @@ public class GrebiApi {
         Set<String> rocksDbSubgraphs = null;
         Set<String> solrSubgraphs = null;
         Set<String> summarySubgraphs = null;
+        Set<String> neoSubgraphs = null;
 
         while(true) {
             try {
                 neo = new GrebiNeoRepo();
                 solr = new GrebiSolrRepo();
                 summary = new GrebiSummaryRepo();
+                neo = new GrebiNeoRepo();
                 rocksDbSubgraphs = (new ResolverClient()).getSubgraphs();
                 solrSubgraphs = solr.getSubgraphs();
                 summarySubgraphs = summary.getSubgraphs();
-                if(new HashSet<>(List.of(rocksDbSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
-                    throw new RuntimeException("RocksDB/Solr/the summary jsons do not seem to contain the same subgraphs. Found: " + String.join(",", rocksDbSubgraphs) + " for RocksDB (from resolver service) and " + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and " + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server)");
+                neoSubgraphs = neo.getSubgraphs();
+                if(new HashSet<>(List.of(rocksDbSubgraphs, solrSubgraphs, summarySubgraphs, neoSubgraphs)).size() != 1) {
+                    throw new RuntimeException("RocksDB/Solr/the summary jsons/Neo4j do not seem to contain the same subgraphs. Found: "
+                            + String.join(",", rocksDbSubgraphs) + " for RocksDB (from resolver service) and "
+                            + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and "
+                            + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server) and"
+                            + String.join(",", neoSubgraphs) + " for Neo4j (from all neo4j hosts)"
+                    );
                 }
                 break;
             } catch(Exception e) {

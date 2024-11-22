@@ -18,26 +18,15 @@ package uk.ac.ebi.grebi.db;
 
 public class Neo4jClient {
 
-    static final String NEO4J_HOST = System.getenv("GREBI_NEO4J_HOST");
-
-    public static String getNeo4jHost() {
-        if(NEO4J_HOST != null)
-            return NEO4J_HOST;
-        return "bolt://localhost:7687/";
-    }
-
+    private final Driver driver;
     private Gson gson = new Gson();
 
-    private Driver driver;
+    public Neo4jClient(String host) {
+        this.driver = GraphDatabase.driver(host);
+    }
 
     public Driver getDriver() {
-
-        if(driver == null) {
-            driver = GraphDatabase.driver(getNeo4jHost());
-        }
-
         return driver;
-
     }
 
     public Session getSession() {
@@ -52,7 +41,6 @@ public class Neo4jClient {
         Session session = getSession();
 
         Result result = session.run(query);
-
         List<Map<String,Object>> list = result.stream().map(r -> r.asMap()).collect(Collectors.toList());
 
         session.close();
