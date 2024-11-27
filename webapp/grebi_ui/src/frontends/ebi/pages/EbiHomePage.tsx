@@ -6,13 +6,12 @@ import { MenuItem, Select } from "@mui/material";
 import { get } from "../../../app/api";
 import EbiHeader from "../EbiHeader";
 import SearchBox from "../../../components/SearchBox";
-import Stats from "../../../model/Stats";
 
 export default function EbiHomePage() {
 
   document.title = "EMBL-EBI Knowledge Graph";
 
-  let [stats, setStats] = useState<Stats|null>(null);
+  let [stats, setStats] = useState<any|null>(null);
   let [subgraphs, setSubgraphs] = useState<string[]|null>(null);
   let [subgraph, setSubgraph] = useState<string|null>(null);
   
@@ -73,7 +72,7 @@ export default function EbiHomePage() {
                 </div>
                 <div className="md:text-right">
          
-              {stats ? (
+              {stats && subgraph && stats[subgraph] ? (
                 <div className="text-neutral-black text-sm">
                   {/* <div className="mb-2 text-sm italic">
                     Updated&nbsp;
@@ -82,8 +81,8 @@ export default function EbiHomePage() {
                     )}
                   </div> */}
                   <p>
-                      <i>{stats.num_nodes.toLocaleString()} nodes</i><br/>
-                      <i>{stats.num_edges.toLocaleString()} edges</i>
+                      <i>{stats[subgraph].num_nodes.toLocaleString()} nodes</i><br/>
+                      <i>{stats[subgraph].num_edges.toLocaleString()} edges</i>
                     </p>
                 </div>
               ) : (
