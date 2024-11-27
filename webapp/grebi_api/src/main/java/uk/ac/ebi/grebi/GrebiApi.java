@@ -154,8 +154,8 @@ public class GrebiApi {
                            .map(edge -> {
                                Map<String, Object> refs = (Map<String,Object>) edge.get("_refs");
                                Map<String, Object> retEdge = new LinkedHashMap<>(edge);
-                               retEdge.put("grebi:fromNodeId", refs.get((String) edge.get("grebi:fromNodeId")));
-                               retEdge.put("grebi:toNodeId", refs.get((String) edge.get("grebi:toNodeId")));
+                               retEdge.put("from", refs.get((String) edge.get("grebi:fromNodeId")));
+                               retEdge.put("to", refs.get((String) edge.get("grebi:toNodeId")));
 
 //                               String type = (String)edge.get("grebi:type");
 //                               if(refs.containsKey(type)) {
