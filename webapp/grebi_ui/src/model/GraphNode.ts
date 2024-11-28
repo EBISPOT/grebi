@@ -29,7 +29,11 @@ export default class GraphNode extends GraphNodeRef {
     }
 
     getLinkUrl():string {
-        return `/subgraphs/${this.getSubgraph()}/nodes/${encodeNodeId(this.getNodeId())}`;
+        if(process.env.GREBI_FRONTEND === 'exposomekg') {
+            return `/nodes/${encodeNodeId(this.getNodeId())}`;
+        } else {
+            return `/subgraphs/${this.getSubgraph()}/nodes/${encodeNodeId(this.getNodeId())}`;
+        }
     }
 
     isBoldForQuery(q:string) {

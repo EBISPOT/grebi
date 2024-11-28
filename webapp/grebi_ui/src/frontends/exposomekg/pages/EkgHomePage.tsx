@@ -13,6 +13,7 @@ export default function EkgHomePage() {
 
   return (
     <div>
+      <EkgHeader section="home" />
       <main className="container mx-auto px-4 h-fit">
         <div className="grid grid-cols-2 lg:grid-cols-1 lg:gap-8">
           <div className="lg:col-span-3">

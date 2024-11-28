@@ -8,6 +8,7 @@ import nocache from 'nocache'
 let server = express()
 
 server.use(nocache())
+server.set('etag', false)
 
 if(process.env.GREBI_DEV_BACKEND_PROXY_URL === undefined) {
     throw new Error('please set GREBI_DEV_BACKEND_PROXY_URL before running dev server')
@@ -30,7 +31,7 @@ server.use(/^\/api.*/, async (req, res) => {
 })
 
 
-server.use(express.static('dist'))
+server.use(express.static('dist', { etag: false }))
 
 server.get(/^(?!\/api).*$/, (req, res) => {
   res.sendFile(process.cwd() + '/dist/index.html')

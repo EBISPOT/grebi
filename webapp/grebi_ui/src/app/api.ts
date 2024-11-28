@@ -69,7 +69,7 @@ export async function getPaginated<ResType>(
 	res.page || 0,
 	res.numElements || 0,
 	res.totalPages || 0,
-	res.totalElements || 0,
+	res.total || 0,
 	res.content || [],
 	res.facetFieldToCounts || new Map()
   );

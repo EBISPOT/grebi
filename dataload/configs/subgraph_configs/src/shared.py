@@ -30,7 +30,8 @@ config = {
         "mondo:0000001",
         "efo:0000408",
         "chebi:36080",
-        "chebi:24431"
+        "chebi:24431",
+        "biolink:ChemicalEntity"
     ],
     "additional_equivalence_groups": [
         ["grebi:name", "ols:label", "rdfs:label", "monarch:name", "impc:name", "reactome:displayName", "dcterms:title", "ncit:Preferred_Name", "robokop:name"],
