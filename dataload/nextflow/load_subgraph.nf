@@ -11,6 +11,7 @@ params.config = "$GREBI_CONFIG"
 params.subgraph = "$GREBI_SUBGRAPH"
 params.timestamp = "$GREBI_TIMESTAMP"
 params.is_ebi = "$GREBI_IS_EBI"
+params.solr_mem = "140g"
 
 workflow {
 
@@ -56,17 +57,16 @@ workflow {
     rocks_tgz = package_rocks(rocks_db)
 
     if(params.is_ebi == "true") {
-    copy_summary_to_ftp(merge_summary_jsons.out)
-    copy_solr_to_ftp(solr_tgz)
-    copy_neo_to_ftp(neo_tgz)
-    copy_rocks_to_ftp(rocks_tgz)
+        copy_summary_to_ftp(merge_summary_jsons.out)
+        copy_solr_to_ftp(solr_tgz)
+        copy_neo_to_ftp(neo_tgz)
+        copy_rocks_to_ftp(rocks_tgz)
 
-    if(params.config == "ebi") {
         copy_summary_to_staging(merge_summary_jsons.out)
         copy_solr_config_to_staging()
         copy_solr_cores_to_staging(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core))
         copy_rocksdb_to_staging(rocks_db)
-    }
+        copy_neo_to_staging(neo_db)
     }
 }
 
@@ -440,13 +440,13 @@ process create_solr_nodes_core {
         --in-template-config-dir ${params.home}/06_prepare_db_import/solr_config_template \
         --out-config-dir solr_config
     python3 ${params.home}/07_create_db/solr/solr_import.slurm.py \
-        --solr-config solr_config --core grebi_nodes_${params.subgraph} --in-data . --out-path solr --port 8985 --mem ${task.memory.toGiga()-2}g
+        --solr-config solr_config --core grebi_nodes_${params.subgraph} --in-data . --out-path solr --port 8985 --mem ${params.solr_mem}
     """
 }
 
 process create_solr_edges_core {
     cache "lenient"
-    memory "4 GB" 
+    memory "1500 GB" 
     time "23h"
     cpus "8"
 
@@ -469,7 +469,8 @@ process create_solr_edges_core {
         --in-template-config-dir ${params.home}/06_prepare_db_import/solr_config_template \
         --out-config-dir solr_config
     python3 ${params.home}/07_create_db/solr/solr_import.slurm.py \
-        --solr-config solr_config --core grebi_edges_${params.subgraph} --in-data . --out-path solr --port 8986 --mem ${task.memory.toGiga()-2}g
+        --solr-config solr_config --core grebi_edges_${params.subgraph} --in-data . --out-path /dev/shm/solr --port 8986 --mem ${params.solr_mem}
+    mv /dev/shm/solr solr
     """
 }
 
@@ -496,7 +497,7 @@ process create_solr_autocomplete_core {
         --in-template-config-dir ${params.home}/06_prepare_db_import/solr_config_template \
         --out-config-dir solr_config
     python3 ${params.home}/07_create_db/solr/solr_import.slurm.py \
-        --solr-config solr_config --core grebi_autocomplete_${params.subgraph} --in-data . --in-names-txt ${names_txt} --out-path solr --port 8987 --mem ${task.memory.toGiga()-2}g
+        --solr-config solr_config --core grebi_autocomplete_${params.subgraph} --in-data . --in-names-txt ${names_txt} --out-path solr --port 8987 --mem ${params.solr_mem}
     """
 }
 
@@ -716,6 +717,23 @@ process copy_rocksdb_to_staging {
     """
 }
 
+process copy_neo_to_staging {
+    cache "lenient"
+    memory "4 GB" 
+    time "8h"
+    queue "datamover"
+
+    input: 
+    path(neodb)
+
+    script:
+    """
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    mkdir -p /nfs/public/rw/ontoapps/grebi/staging/neo4j
+    cp -LR * /nfs/public/rw/ontoapps/grebi/staging/neo4j/
+    """
+}
 
 def parseJson(json) {
     return new JsonSlurper().parseText(json)

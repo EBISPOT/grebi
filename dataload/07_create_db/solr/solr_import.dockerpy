@@ -40,6 +40,7 @@ def main():
 
     os.environ['SOLR_ENABLE_REMOTE_STREAMING'] = 'true'
     os.environ['SOLR_SECURITY_MANAGER_ENABLED'] = 'false'
+    os.environ['JAVA_TOOL_OPTIONS'] = '-Djava.net.useSystemProxies=false'
 
     cmd = ['solr', 'start', '-m', mem, '-p', port, '-noprompt', '-force']
     print(' '.join(cmd))
@@ -47,13 +48,13 @@ def main():
 
     time.sleep(30)
 
-    subprocess.run(['wait-for-solr.sh', '--solr-url', f"http://localhost:{port}"])
+    #subprocess.run(['wait-for-solr.sh', '--solr-url', f"http://127.0.0.1:{port}/solr/{core}/select?q=*:*"])
 
     time.sleep(30)
 
     if "_autocomplete" in core:
         print("Uploading names.txt")
-        response = session.get(f"http://localhost:{port}/solr/{core}/update",
+        response = session.get(f"http://127.0.0.1:{port}/solr/{core}/update",
                                 params={
                                     'stream.file': '/names.txt',
                                     'fieldnames': 'label',
@@ -85,7 +86,7 @@ def main():
 
 def upload_file(core, port, filename):
     print(f"Uploading {core.split('_')[1]} file: {filename}")
-    response = session.get(f"http://localhost:{port}/solr/{core}/update/json/docs",
+    response = session.get(f"http://127.0.0.1:{port}/solr/{core}/update/json/docs",
                             params={
                                 'stream.file': filename,
                                 'stream.contentType': 'application/json;charset=utf-8',
