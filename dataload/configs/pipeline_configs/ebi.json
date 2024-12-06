@@ -1,7 +1,3 @@
 {
     "subgraphs": [
-        "ebi_monarch_xspecies",
-        "impc_x_gwas",
-        "hra_kg"
-    ]
-}
+        "impc_x_gwas" ]}
