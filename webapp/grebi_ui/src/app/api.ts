@@ -23,11 +23,15 @@ export async function request(
   apiUrl?: string
 ): Promise<any> {
   const url = (apiUrl || process.env.REACT_APP_APIURL) + path;
+  const message = `Loading ${url}`
+  console.log(message)
+  console.time(message)
   //const res = await fetch(url.replace(/([^:]\/)\/+/g, "$1"), {
   const res = await fetch(url + (reqParams ? ('?' + buildSearchParams(reqParams)) : ''), {
     ...(init ? init : {}),
     //headers: { ...(init?.headers || {}), ...getAuthHeaders() }
   });
+  console.timeEnd(message)
   if (!res.ok) {
     const message = `Failure loading ${res.url} with status ${res.status} (${res.statusText})`;
     console.dir(message);

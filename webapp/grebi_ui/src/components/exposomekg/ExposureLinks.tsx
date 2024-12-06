@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import GraphNode from "../../model/GraphNode";
 import { getPaginated, Page } from "../../app/api";
 import encodeNodeId from "../../encodeNodeId";
-import { CircularProgress, Grid, Typography } from "@mui/material";
+import { CircularProgress, Grid, Tab, Tabs, Typography } from "@mui/material";
 import { asArray, copyToClipboard } from "../../app/util";
 import LocalDataTable from "../datatable/LocalDataTable";
 import NodeRefLink from "../node_edge_list/NodeRefLink";
@@ -12,37 +12,53 @@ import { DatasourceTags } from "../DatasourceTag";
 import Refs from "../../model/Refs";
 import PropVals from "../node_prop_table/PropVals";
 import PropVal from "../../model/PropVal";
+import { useSearchParams } from "react-router-dom";
+import getExposureLinksTabs, { LinksTab } from "./getExposureLinksTabs";
+import { OpenInNew, Share } from "@mui/icons-material";
+import TabPanel from "../TabPanel";
 
 
 export default function ExposureLinks({node}:{node:GraphNode}) {
 
-    let type = node.extractType()
-    var links:any = null
-    if(type) {
-        if(type.short === 'Gene') {
-            links = <GeneExposureLinks node={node} />
-        }
-        if(type.short === 'Chemical') {
-            links = <ChemicalExposureLinks node={node} />
-        }
+  let [searchParams, setSearchParams] = useSearchParams();
+  let linksTab = searchParams.get("linksTab") || "sourceids";
+
+  let [linksTabs, setLinksTabs] = useState<LinksTab[]>([])
+
+  useEffect(() => {
+    async function getLinksTabs() {
+        let tabs = await getExposureLinksTabs(node)
+        setLinksTabs(tabs)
     }
+    getLinksTabs()
+  }, [node])
 
-
-    return <div>
-        <ExpandableSection title="Source IDs">
+    return <Grid container spacing={1} direction="column" className="py-0">
+            <Grid item xs={2} className="py-0">
+    <Tabs orientation="horizontal" value={linksTab} className="bg-gray-100 border-black justify-center rounded-lg" sx={{ borderBottom: 1, borderColor: 'divider' }} onChange={(e, tab) => setSearchParams({linksTab:tab})}>
+        <Tab label={
+            <div><OpenInNew fontSize="small" style = { {verticalAlign : 'middle'} } /> Source IDs </div>
+         } value={"sourceids"} className="grebi-subtab" />
+        {linksTabs.map(tab => <Tab label={
+            <div><OpenInNew fontSize="small" style = { {verticalAlign : 'middle'} } /> {tab.tabName} </div>
+            } value={tab.tabId} className="text-black" />)}
+    </Tabs>
+    </Grid>
+    <Grid item xs={10}>
+    <TabPanel value={linksTab} index={"sourceids"}>
                     <Grid container spacing={0.5} direction="row" alignItems={"left"} justifyContent={"left"} className="pb-5">
-              {node.getSourceIds().map(id => <Grid item>
-                <div className="bg-grey-default rounded-sm font-mono pl-1" style={{fontSize:'small'}}>
-                {id.value} <button onClick={() => { copyToClipboard(id.value); }} >
-                  <i className="icon icon-common icon-copy icon-spacer" />
-                </button>
-                </div>
-</Grid>
-)}
-            </Grid>
-        </ExpandableSection>
-        {links && links}
-    </div>
+               {node.getSourceIds().map(id => <Grid item>
+                 <div className="bg-grey-default rounded-sm font-mono pl-1" style={{fontSize:'small'}}>
+                 {id.value} <button onClick={() => { copyToClipboard(id.value); }} >
+                   <i className="icon icon-common icon-copy icon-spacer" />
+                 </button>
+                 </div>
+ </Grid>
+ )}
+             </Grid>
+    </TabPanel>
+    </Grid>
+    </Grid>
 }
 
 
@@ -51,11 +67,13 @@ let fixedCols = [
         id: "grebi:datasources",
         name: "Datasources",
         selector: (edge:GraphEdge, key:string) => <DatasourceTags dss={edge['grebi:datasources']} />,
+        sortable:true
     },
     {
         id: "from",
         name: "Chemical",
         selector: (edge:GraphEdge, key:string) => <NodeRefLink subgraph={process.env.REACT_APP_EXPOSOMEKG_SUBGRAPH!} nodeRef={new GraphNodeRef(edge['from'])} showTypeChip={false} />,
+        sortable:true
     }
 ];
 
@@ -91,9 +109,9 @@ function GeneExposureLinks({node}:{node:GraphNode}) {
     return <div>
         <ExpandableSection title={
             affectedBy ? 
-            `Gene-chemical interactions (${affectedBy.totalElements})`
+            `Chemical interactions (${affectedBy.totalElements})`
             :
-            `Gene-chemical interactions (Loading...)`
+            <Fragment>Chemical interactions <i color="gray">(Loading...)</i></Fragment>
             } loading={!affectedBy}>
 
 {affectedBy &&
@@ -101,6 +119,7 @@ function GeneExposureLinks({node}:{node:GraphNode}) {
                     data={affectedBy?.elements} 
                     addColumnsFromData={true}
                     columns={fixedCols}
+                    maxRowHeight={"1.5em"}
                     defaultSelector={DefaultSelector}
                     hideColumns={[
                         "_refs",
@@ -130,7 +149,7 @@ function ChemicalExposureLinks({node}:{node:GraphNode}) {
 
 
 
-function ExpandableSection({title, loading, children}) {
+function ExpandableSection({title, loading, children}:{title:string, loading?:boolean|undefined, children:any}) {
 
     let [expanded, setExpanded] = useState<boolean>(false);
 

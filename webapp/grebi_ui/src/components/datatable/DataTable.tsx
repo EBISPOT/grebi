@@ -30,7 +30,8 @@ export default function DataTable({
   sortColumn,
   setSortColumn,
   sortDir,
-  setSortDir
+  setSortDir,
+  maxRowHeight
 }: {
   columns?: readonly Column[]|undefined;
   defaultSelector:undefined|((row:any, key:string)=>any);
@@ -49,6 +50,7 @@ export default function DataTable({
   setSortColumn?: (sortColumn: string) => void,
   sortDir?: 'asc'|'desc',
   setSortDir?: (sortDir: 'asc'|'desc') => void,
+  maxRowHeight?:string|undefined
 }) {
 
   let [autoAddedColumns, setAutoAddedColumns] = useState<Column[]>([])
@@ -186,9 +188,11 @@ export default function DataTable({
                         className="text-md align-top py-2 px-4"
                         key={randomString()}
                       >
+                        <div style={{ ...( maxRowHeight ? {maxHeight: maxRowHeight, overflowY:"scroll"} : {}) }}>
                         {column.selector(row, column.id)
                           ? column.selector(row, column.id)
                           : "(no data)"}
+                        </div>
                       </td>
                     );
                   })}

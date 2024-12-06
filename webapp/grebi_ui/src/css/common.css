@@ -1404,3 +1404,7 @@ filter: gray;
     background-color: var(--grebi-base-color);
     border-color: var(--grebi-base-color);
 }
+.grebi-subtab {
+  color: black !important;
+  text-transform: none !important;
+}

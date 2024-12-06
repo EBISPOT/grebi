@@ -21,6 +21,7 @@ import GraphNode from "../../../model/GraphNode";
 import { get, getPaginated } from "../../../app/api";
 import encodeNodeId from "../../../encodeNodeId";
 import ExposureLinks from "../../../components/exposomekg/ExposureLinks";
+import TabPanel from "../../../components/TabPanel";
 
 
 export default function EkgNodePage() {
@@ -79,15 +80,15 @@ export default function EkgNodePage() {
           <ExposureLinks node={node} />
         </TabPanel>
         <TabPanel value={tab} index={"properties"}>
-          <PropTable lang={lang} subgraph={process.env.REACT_APP_EXPOSOMEKG_SUBGRAPH} node={node} />
+          <PropTable lang={lang} subgraph={process.env.REACT_APP_EXPOSOMEKG_SUBGRAPH!} node={node} />
         </TabPanel>
         <TabPanel value={tab} index={"edges_in"}>
-          <EdgesInList subgraph={process.env.REACT_APP_EXPOSOMEKG_SUBGRAPH} node={node} />
+          <EdgesInList subgraph={process.env.REACT_APP_EXPOSOMEKG_SUBGRAPH!} node={node} />
         </TabPanel>
         <TabPanel value={tab} index={"edges_out"}>
         </TabPanel>
         <TabPanel value={tab} index={"graph"}>
-         <GraphView subgraph={process.env.REACT_APP_EXPOSOMEKG_SUBGRAPH} node={node} />
+         <GraphView subgraph={process.env.REACT_APP_EXPOSOMEKG_SUBGRAPH!} node={node} />
         </TabPanel>
         </Grid>
         </Grid>
@@ -96,31 +97,3 @@ export default function EkgNodePage() {
     </div>
   );
 }
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: string;
-  value: string;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`vertical-tabpanel-${index}`}
-      aria-labelledby={`vertical-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
-
-
