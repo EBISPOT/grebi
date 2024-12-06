@@ -11,19 +11,23 @@ import { DatasourceTags } from "../DatasourceTag";
 import DataTable from "../datatable/DataTable";
 import LoadingOverlay from "../LoadingOverlay";
 
-export default function EdgesInList(params:{
-    subgraph:string,
-    node:GraphNode
-}) {
-    let { subgraph, node } = params
-
-  let [edgesState, setEdgesState] = useState<null|{
+export interface EdgesState {
     total:number,
     datasources:string[],
     edges:any[],
     facetFieldToCounts:any,
     propertyColumns:string[]
-  }>(null)
+};
+
+export default function EdgesInList(params:{
+    subgraph:string,
+    node:GraphNode,
+    onEdgesLoaded?:((edges:EdgesState) => void)|undefined,
+    extraSearchParams?: string[][]|undefined
+}) {
+    let { subgraph, node, onEdgesLoaded, extraSearchParams } = params
+
+  let [edgesState, setEdgesState] = useState<null|EdgesState>(null)
 
   let [dsEnabled,setDsEnabled] = useState<null|string[]>(null) 
 
@@ -45,12 +49,13 @@ export default function EdgesInList(params:{
                     ['sortBy', sortColumn],
                     ['sortDir', sortDir],
                     ['facet', 'grebi:datasources'],
+                    ...(extraSearchParams||[]),
                     ...(filter ? [['q', filter]] : []),
                     ...(edgesState && dsEnabled!==null ? 
                             difference(edgesState.datasources, dsEnabled).map(ds => ['-grebi:datasources', ds]) : [])
                 ])
             }`)).map(e => new GraphEdge(e))
-            setEdgesState({
+            let newEdgesState = {
                 total: res.totalElements,
                 datasources: Object.keys(res.facetFieldsToCounts['grebi:datasources']),
                 edges: res.elements,
@@ -59,7 +64,10 @@ export default function EdgesInList(params:{
                     Object.keys(res.facetFieldsToCounts)
                         .filter(k => k !== 'grebi:datasources')
                         .filter(k => Object.entries(res.facetFieldsToCounts[k]).length > 0)
-            })
+            };
+            if(onEdgesLoaded)
+                onEdgesLoaded(newEdgesState);
+            setEdgesState(newEdgesState);
             setLoading(false)
         }
         getEdges()

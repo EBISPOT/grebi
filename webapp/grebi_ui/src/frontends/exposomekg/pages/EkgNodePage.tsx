@@ -75,7 +75,7 @@ export default function EkgNodePage() {
           </Tabs>
           </Grid>
           <Grid item xs={10}>
-        <TabPanel value={tab} index={"summary"}>
+        <TabPanel value={tab} index={"links"}>
           <ExposureLinks node={node} />
         </TabPanel>
         <TabPanel value={tab} index={"properties"}>

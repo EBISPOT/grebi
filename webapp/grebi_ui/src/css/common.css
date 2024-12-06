@@ -1,6 +1,3 @@
-/*
- * TAILWIND REUSABLE STYLES 
- */
 
 @tailwind base;
 @tailwind components;
@@ -1323,22 +1320,9 @@ filter: gray;
 }
 
 
-.Mui-selected {
-  color: rgb(115 35 183) !important;
-}
-.MuiTabs-indicator {
-  background-color: rgb(115 35 183) !important;
-}
-
-.MuiSvgIcon-colorPrimary {
-  color: rgb(115 35 183) !important;
-}
-
-
 .link-datasource {
   cursor: pointer;
   --tw-bg-opacity: 1;
-  background-color: rgb(115 35 183 / var(--tw-bg-opacity));
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
 }
@@ -1346,11 +1330,18 @@ filter: gray;
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
   --tw-text-opacity: 1;
-  color: rgb(115 35 183 / var(--tw-text-opacity));
   outline-style: solid;
   outline-width: 2px;
+}
+.link-datasource {
+  background-color: rgb(115 35 183 / var(--tw-bg-opacity));
+}
+.link-datasource:hover {
+  color: rgb(115 35 183 / var(--tw-text-opacity));
   outline-color: rgb(115 35 183);
 }
+
+
 .link-ontology {
   cursor: pointer;
   --tw-bg-opacity: 1;
@@ -1397,3 +1388,19 @@ filter: gray;
   margin-right: 0.25rem;
 }
 
+
+.Mui-selected, .link-default {
+  color: var(--grebi-base-color) !important;
+}
+.MuiTabs-indicator {
+  background-color: var(--grebi-base-color) !important;
+}
+
+.MuiSvgIcon-colorPrimary {
+  color: var(--grebi-base-color) !important;
+}
+
+.button-primary {
+    background-color: var(--grebi-base-color);
+    border-color: var(--grebi-base-color);
+}

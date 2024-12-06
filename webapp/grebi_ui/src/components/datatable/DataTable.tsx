@@ -1,7 +1,7 @@
 import { ArrowDownward, ArrowUpward, KeyboardArrowDown, SwapVert } from "@mui/icons-material";
 import { randomString } from "../../app/util";
 import { Pagination } from "../Pagination";
-import React from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import DtSortIcon from "./DtSortIcon";
 
 export interface Column {
@@ -9,12 +9,15 @@ export interface Column {
   name: string;
   minWidth?: number;
   align?: "right";
-  selector: (row: any) => any;
+  selector: (row: any, key:string) => any;
   sortable: boolean;
 }
 
 export default function DataTable({
   columns,
+  defaultSelector,
+  addColumnsFromData,
+  hideColumns,
   data,
   dataCount,
   placeholder,
@@ -29,8 +32,11 @@ export default function DataTable({
   sortDir,
   setSortDir
 }: {
-  columns: readonly Column[];
+  columns?: readonly Column[]|undefined;
+  defaultSelector:undefined|((row:any, key:string)=>any);
   data: any[];
+  addColumnsFromData?:boolean,
+  hideColumns?: string[]|undefined,
   dataCount?: number;
   placeholder?: string;
   onSelectRow?: (row: any) => void;
@@ -44,6 +50,48 @@ export default function DataTable({
   sortDir?: 'asc'|'desc',
   setSortDir?: (sortDir: 'asc'|'desc') => void,
 }) {
+
+  let [autoAddedColumns, setAutoAddedColumns] = useState<Column[]>([])
+
+  useEffect(() => {
+
+    if(addColumnsFromData) {
+
+      if(!defaultSelector) {
+        throw new Error("need a defaultSelector to automatically add columns from data")
+      }
+
+      let newCols:Column[] = []
+
+      for(let row of data) {
+        for(let key in row) {
+          if(hideColumns && hideColumns.includes(key)) {
+            continue
+          }
+          if(columns && columns.find((c) => c.id === key)) {
+            continue
+          }
+          if(newCols.find((c) => c.id === key)) {
+            continue
+          }
+          newCols.push({
+            id: key,
+            name: key,
+            selector: defaultSelector,
+            sortable: true
+          })
+        }
+      }
+
+      if(JSON.stringify(newCols) !== JSON.stringify(autoAddedColumns)) {
+        setAutoAddedColumns(newCols)
+      }
+    }
+
+  }, [data, addColumnsFromData]);
+
+
+  columns = [...(columns || []), ...autoAddedColumns]
 
   return (
     <div>
@@ -138,8 +186,8 @@ export default function DataTable({
                         className="text-md align-top py-2 px-4"
                         key={randomString()}
                       >
-                        {column.selector(row)
-                          ? column.selector(row)
+                        {column.selector(row, column.id)
+                          ? column.selector(row, column.id)
                           : "(no data)"}
                       </td>
                     );

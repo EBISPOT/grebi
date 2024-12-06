@@ -30,6 +30,16 @@ export default function EkgHeader({ section }: { section?: string }) {
           <title>{caps(section)} - ExposomeKG</title>
         </Helmet>
       <div className="container mx-auto px-4 flex flex-col md:flex-row md:gap-10">
+        <div className="py-6 self-center">
+          <a href={urlJoin(process.env.PUBLIC_URL!, "/")}>
+            <img
+              style={{height:'80px'}}
+              alt="EMBL Human Ecosystems Traversal Theme"
+              className="h-8 inline-block"
+              src={urlJoin(process.env.PUBLIC_URL!, "/hett.png")}
+            />
+          </a>
+        </div>
         <nav className="self-center">
           <ul
             className="bg-transparent text-white flex flex-wrap divide-white divide-x"

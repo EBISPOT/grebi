@@ -16,7 +16,7 @@ class PropVal {
     public static from(src:any):PropVal {
 
         if(!src)
-            return src
+            return new PropVal([], {}, ''+src)
 
         if(src instanceof PropVal) {
             return src
@@ -30,7 +30,7 @@ class PropVal {
         let value = src['grebi:value']
 
         if(ds === undefined || value === undefined) {
-            throw new Error('missing ds or value in ' + JSON.stringify(src))
+            return new PropVal([], {}, src)
         }
 
         if(typeof value === 'object' && value['grebi:value'] !== undefined) {

@@ -6,10 +6,11 @@ import GraphNode from "../../model/GraphNode";
 import PropVal from "../../model/PropVal";
 import ClassExpression from "../ClassExpression";
 import isSingleLineProp from "./isSingleLineProp";
+import Refs from "../../model/Refs";
 
-export default function PropVals(params:{ subgraph:string,node:GraphNode,prop:string,values:PropVal[] }) {
+export default function PropVals(params:{ subgraph:string,refs:Refs,values:PropVal[] }) {
 
-    let { subgraph,node, prop, values } = params;
+    let { subgraph,refs, values } = params;
 
     // if all values are <= 32 characters use one line and possibly monospace (if not links)
     let oneLine = values.filter(v => !isSingleLineProp(v)).length === 0;
@@ -19,7 +20,7 @@ export default function PropVals(params:{ subgraph:string,node:GraphNode,prop:st
         <span>
             {
                 values.map( (value,i) => <Fragment>
-                    <PropValue subgraph={subgraph} node={node} prop={prop} value={value} monospace={false} separator={i > 0 ? ";" : ""} />
+                    <PropValue subgraph={subgraph} refs={refs} value={value} monospace={false} separator={i > 0 ? ";" : ""} />
                     </Fragment>
                 )
             }
@@ -31,7 +32,7 @@ export default function PropVals(params:{ subgraph:string,node:GraphNode,prop:st
                 {
                     values.map( (value,i) => 
                         <div className={i>0?"pt-1":""}>
-                        <PropValue subgraph={subgraph} node={node} prop={prop} value={value} monospace={false} separator="" />
+                        <PropValue subgraph={subgraph} refs={refs} value={value} monospace={false} separator="" />
                         </div>
                     )
                 }
@@ -41,19 +42,19 @@ export default function PropVals(params:{ subgraph:string,node:GraphNode,prop:st
 
 }
 
-function PropValue(params:{subgraph:string,node:GraphNode,prop:string,value:PropVal,monospace:boolean,separator:string}) {
+function PropValue(params:{subgraph:string,refs:Refs,value:PropVal,monospace:boolean,separator:string}) {
 
-    let { subgraph, node, prop, value, monospace, separator } = params;
+    let { subgraph, refs, value, monospace, separator } = params;
 
     if(typeof value.value === 'object') {
         if(value.value["rdf:type"] !== undefined) {
-            return <ClassExpression subgraph={subgraph} node={node} expr={value.value} />
+            return <ClassExpression subgraph={subgraph} refs={refs} expr={value.value} />
         } else {
             return <span>{JSON.stringify(value.value)}</span>
         }
     }
 
-    let mapped_value = node.getRefs().get(value.value);
+    let mapped_value = refs.get(value.value);
   
     // todo mapped value datasources
     if(mapped_value) {

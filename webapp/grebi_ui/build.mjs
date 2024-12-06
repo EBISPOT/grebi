@@ -1,6 +1,9 @@
 import { exec } from "child_process";
 import { build } from "esbuild";
 import fs from "fs";
+import tw from 'tailwindcss';
+import postcss from 'postcss';
+import atImport from 'postcss-import';
 
 let define = {};
 for (const k in process.env) {
@@ -48,7 +51,18 @@ build({
 /// Build styles.css (tailwind)
 ///
 console.log("### Building styles.css");
-exec(`tailwind -i ./src/styles_${process.env.GREBI_FRONTEND}.css -o ./dist/styles.css`);
+
+postcss()
+  .use(atImport({
+    path: ['./src/css']
+  }))
+  .use(tw())
+  .process(fs.readFileSync(`./src/css/${process.env.GREBI_FRONTEND}.css`), {
+    from: `./src/css/${process.env.GREBI_FRONTEND}.css`
+  })
+  .then((result) => {
+    fs.writeFileSync(`./dist/styles.css`, result.css);
+  });
 
 ///
 /// Copy files

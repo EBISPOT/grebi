@@ -5,16 +5,18 @@ import NodeTypeChip from "../NodeTypeChip"
 
 export default function NodeRefLink({
     subgraph,
-    nodeRef
+    nodeRef,
+    showTypeChip
 }:{
     subgraph:string,
-    nodeRef:GraphNodeRef
+    nodeRef:GraphNodeRef,
+    showTypeChip?:boolean|undefined
 }) {
     let type = nodeRef.extractType()
 
     return <Link to={`/subgraphs/${subgraph}/nodes/${nodeRef.getEncodedNodeId()}`}>
         {nodeRef.getName()}
-        {type && <NodeTypeChip type={type} />}
+        {showTypeChip && type && <NodeTypeChip type={type} />}
         {/* <br/>
         <DatasourceTags dss={nodeRef.getDatasources()} /> */}
     </Link>
