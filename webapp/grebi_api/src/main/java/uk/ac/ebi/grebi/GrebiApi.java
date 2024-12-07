@@ -27,9 +27,9 @@ public class GrebiApi {
 
     public static void main(String[] args) throws ParseException, org.apache.commons.cli.ParseException, IOException {
 
-        GrebiNeoRepo neo;
-        GrebiSolrRepo solr;
-        GrebiSummaryRepo summary;
+        GrebiNeoRepo neo = null;
+        GrebiSolrRepo solr = null;
+        GrebiSummaryRepo summary= null;
 
         Set<String> rocksDbSubgraphs = null;
         Set<String> solrSubgraphs = null;
@@ -38,24 +38,20 @@ public class GrebiApi {
 
         while(true) {
             try {
-                neo = new GrebiNeoRepo();
                 solr = new GrebiSolrRepo();
                 summary = new GrebiSummaryRepo();
-                neo = new GrebiNeoRepo();
                 rocksDbSubgraphs = (new ResolverClient()).getSubgraphs();
                 solrSubgraphs = solr.getSubgraphs();
                 summarySubgraphs = summary.getSubgraphs();
-                neoSubgraphs = neo.getSubgraphs();
-                if(new HashSet<>(List.of(rocksDbSubgraphs, solrSubgraphs, summarySubgraphs, neoSubgraphs)).size() != 1) {
-                    throw new RuntimeException("RocksDB/Solr/the summary jsons/Neo4j do not seem to contain the same subgraphs. Found: "
+                if(new HashSet<>(List.of(rocksDbSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
+                    throw new RuntimeException("RocksDB/Solr/the summary jsons do not seem to contain the same subgraphs. Found: "
                             + String.join(",", rocksDbSubgraphs) + " for RocksDB (from resolver service) and "
                             + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and "
-                            + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server) and"
-                            + String.join(",", neoSubgraphs) + " for Neo4j (from all neo4j hosts)"
+                            + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server)"
                     );
                 }
                 break;
-            } catch(Exception e) {
+            } catch(Throwable e) {
                 System.out.println("Could not get subgraphs from one of the services. Retrying in 10 seconds...");
                 e.printStackTrace();
                 try {
@@ -64,6 +60,34 @@ public class GrebiApi {
                     interruptedException.printStackTrace();
                 }
             }
+        }
+
+        for(int i = 0; i < 5; ++ i) {
+            try {
+                neo = new GrebiNeoRepo();
+                neoSubgraphs = neo.getSubgraphs();
+                if(new HashSet<>(List.of(rocksDbSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
+                    neo = null;
+                    throw new RuntimeException("RocksDB/Solr/the summary jsons/neo4j do not seem to contain the same subgraphs. Found: "
+                            + String.join(",", rocksDbSubgraphs) + " for RocksDB (from resolver service) and "
+                            + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and "
+                            + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server) and "
+                            + String.join(",", neoSubgraphs) + " for neo4j"
+                    );
+                }
+            } catch (Throwable e) {
+                System.out.println("Could not get subgraphs from Neo4j. Retrying in 10 seconds ("+ (4-i) + " attempts left)");
+                e.printStackTrace();
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
+            }
+        }
+
+        if(neo == null) {
+            System.out.println("Neo4j is unavailable; some graph query API endpoints will be disabled");
         }
 
         System.out.println("Found subgraphs: " + String.join(",", solrSubgraphs));
@@ -78,7 +102,7 @@ public class GrebiApi {
         final Set<String> subgraphs
     ) {
 
-        var stats = neo.getStats();
+        var stats = neo != null ? neo.getStats() : null;
 
         Gson gson = new Gson();
 
@@ -93,7 +117,11 @@ public class GrebiApi {
                 })
                 .get("/api/v1/stats", ctx -> {
                     ctx.contentType("application/json");
-                    ctx.result(gson.toJson(stats));
+                    if(stats != null) {
+                        ctx.result(gson.toJson(stats));
+                    } else {
+                        ctx.result("{\"error\":\"neo4j is not available\"}");
+                    }
                 })
                 .get("/api/v1/subgraphs", ctx -> {
                     ctx.contentType("application/json");

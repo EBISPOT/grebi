@@ -206,7 +206,7 @@ public class GrebiSolrQuery {
     private String getSolrPropertyValue(String propertyValue, SearchType searchType) {
         switch(searchType) {
             case CASE_INSENSITIVE_TOKENS:
-                return propertyValue.toLowerCase();
+                return propertyValue;
             case WHOLE_FIELD:
                 return propertyValue;
             default:
