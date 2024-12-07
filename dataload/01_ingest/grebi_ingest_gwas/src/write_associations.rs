@@ -106,9 +106,9 @@ pub fn write_associations(csv_reader: &mut csv::Reader<BufReader<StdinLock>>,nod
                 "grebi:type": ["gwas:SNP"],
                 "rdf:type": ["so:0000694"], // SNP
                 "gwas:mapped_gene": mapped_gene.split(", ").collect::<Vec<&str>>(),
-                "gwas:upstream_gene_id": [upstream_gene_id],
-                "gwas:downstream_gene_id": [downstream_gene_id],
-                "gwas:snp_gene_ids": snp_gene_ids.split(", ").collect::<Vec<&str>>(),
+                "gwas:upstream_gene_id": add_prefix(upstream_gene_id, "ensembl:"),
+                "gwas:downstream_gene_id": add_prefix(downstream_gene_id, "ensembl:"),
+                "gwas:snp_gene_ids": snp_gene_ids.split(", ").map(|s| add_prefix(s, "ensembl:")).collect::<Vec<String>>(),
                 "gwas:associated_with": Value::Array(mapped_trait_uri.split(", ").map(|tr| {
                     return json!({
                         "grebi:value": tr,
@@ -162,4 +162,12 @@ pub fn write_associations(csv_reader: &mut csv::Reader<BufReader<StdinLock>>,nod
         }
     }
 
+}
+
+fn add_prefix(s:&str, prefix:&str) -> String {
+    if s.is_empty() {
+        return "".to_owned();
+    } else {
+        return prefix.to_owned() + s;
+    }
 }
