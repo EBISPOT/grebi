@@ -37,16 +37,21 @@ export default function ExposureLinks({node}:{node:GraphNode}) {
             <Grid item xs={2} className="py-0">
     <Tabs orientation="horizontal" value={linksTab} className="bg-gray-100 border-black justify-center rounded-lg" sx={{ borderBottom: 1, borderColor: 'divider' }} onChange={(e, tab) => setSearchParams({linksTab:tab})}>
         <Tab label={
-            <div><OpenInNew fontSize="small" style = { {verticalAlign : 'middle'} } /> Source IDs </div>
+            <div>
+                {/* <OpenInNew fontSize="small" style = { {verticalAlign : 'middle'} } /> */}
+                Source IDs </div>
          } value={"sourceids"} className="grebi-subtab" />
         {linksTabs.map(tab => <Tab label={
-            <div><OpenInNew fontSize="small" style = { {verticalAlign : 'middle'} } /> {tab.tabName} </div>
-            } value={tab.tabId} className="text-black" />)}
+            <div>
+                {/* <OpenInNew fontSize="small" style = { {verticalAlign : 'middle'} } /> */}
+                {tab.tabName} </div>
+            } value={tab.tabId} className="grebi-subtab" />)}
     </Tabs>
     </Grid>
-    <Grid item xs={10}>
+    <Grid item xs={10} >
     <TabPanel value={linksTab} index={"sourceids"}>
-                    <Grid container spacing={0.5} direction="row" alignItems={"left"} justifyContent={"left"} className="pb-5">
+                    <Grid
+                    container spacing={0.5} direction="row" alignItems={"left"} justifyContent={"left"} className="pb-5">
                {node.getSourceIds().map(id => <Grid item>
                  <div className="bg-grey-default rounded-sm font-mono pl-1" style={{fontSize:'small'}}>
                  {id.value} <button onClick={() => { copyToClipboard(id.value); }} >
@@ -57,8 +62,14 @@ export default function ExposureLinks({node}:{node:GraphNode}) {
  )}
              </Grid>
     </TabPanel>
-    </Grid>
-    </Grid>
+    {!linksTabs && <CircularProgress />}
+    {linksTabs && linksTabs.filter(tab => tab.tabId === 'chemical_gene_interactions').length > 0 &&
+    <TabPanel value={linksTab} index={"chemical_gene_interactions"}>
+        <GeneExposureLinks node={node} />
+    </TabPanel>
+    }
+             </Grid>
+             </Grid>
 }
 
 
@@ -105,17 +116,11 @@ function GeneExposureLinks({node}:{node:GraphNode}) {
 
     }, [node.getNodeId()])
 
+    if(!affectedBy) {
+        return <CircularProgress/>
+    }
 
-    return <div>
-        <ExpandableSection title={
-            affectedBy ? 
-            `Chemical interactions (${affectedBy.totalElements})`
-            :
-            <Fragment>Chemical interactions <i color="gray">(Loading...)</i></Fragment>
-            } loading={!affectedBy}>
-
-{affectedBy &&
-                <LocalDataTable
+    return <LocalDataTable
                     data={affectedBy?.elements} 
                     addColumnsFromData={true}
                     columns={fixedCols}
@@ -133,13 +138,6 @@ function GeneExposureLinks({node}:{node:GraphNode}) {
                         "to"
                     ]}
                     />
-                }
-
-        </ExpandableSection>
-    </div>
-
-
-
 }
 
 function ChemicalExposureLinks({node}:{node:GraphNode}) {

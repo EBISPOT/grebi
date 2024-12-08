@@ -127,7 +127,9 @@ export default function SearchBox({
     (text, i): SearchBoxEntry => {
       searchParams.set("q", text);
       if (collectionId) searchParams.set("collection", collectionId);
-      const linkUrl = `/subgraphs/${subgraph}/search?${new URLSearchParams(searchParams)}`;
+
+      var linkUrl = process.env.GREBI_FRONTEND === 'exposomekg' ? `/search?${new URLSearchParams(searchParams)}` : `/subgraphs/${subgraph}/search?${new URLSearchParams(searchParams)}`;
+
       return {
         linkUrl,
         li: (
@@ -238,7 +240,9 @@ export default function SearchBox({
                   } else if (query) {
                     searchParams.set("q", query);
                     if (collectionId) searchParams.set("collection", collectionId);
-                    navigate(`/subgraphs/${subgraph}/search?${new URLSearchParams(searchParams)}`);
+
+      var linkUrl = process.env.GREBI_FRONTEND === 'exposomekg' ? `/search?${new URLSearchParams(searchParams)}` : `/subgraphs/${subgraph}/search?${new URLSearchParams(searchParams)}`;
+                    navigate(linkUrl);
                   }
                 } else if (ev.key === "ArrowDown") {
                   setArrowKeySelectedN(
@@ -292,7 +296,9 @@ export default function SearchBox({
                       searchParams.set("q", query);
                       if (collectionId)
                         searchParams.set("collection", collectionId);
-                      navigate(`/subgraphs/${subgraph}/search?${new URLSearchParams(searchParams)}`);
+
+      var linkUrl = process.env.GREBI_FRONTEND === 'exposomekg' ? `/search?${new URLSearchParams(searchParams)}` : `/subgraphs/${subgraph}/search?${new URLSearchParams(searchParams)}`;
+                      navigate(linkUrl);
                     }
                   }}
                 >
@@ -309,7 +315,9 @@ export default function SearchBox({
                 if (query) {
                   searchParams.set("q", query);
                   if (collectionId) searchParams.set("collection", collectionId);
-                  navigate(`/subgraphs/${subgraph}/search?${new URLSearchParams(searchParams)}`);
+
+      var linkUrl = process.env.GREBI_FRONTEND === 'exposomekg' ? `/search?${new URLSearchParams(searchParams)}` : `/subgraphs/${subgraph}/search?${new URLSearchParams(searchParams)}`;
+                  navigate(linkUrl);
                 }
               }}
             >

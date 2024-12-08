@@ -80,11 +80,17 @@ export default class GraphNodeRef {
 
         let types:string[] = PropVal.arrFrom(this.props['grebi:type']).map(t => t.value)
 
+        if(types.indexOf("cheminf:DrugBank_identifier") !== -1) {
+            return {long:'Drug',short:'Drug'}
+        }
         if(types.indexOf('impc:MouseGene') !== -1) {
             return {long:'Gene',short:'Gene'}
         }
         if(types.indexOf('biolink:Gene') !== -1) {
             return {long:'Gene',short:'Gene'}
+        }
+        if(types.indexOf('biolink:ChemicalEntity') !== -1) {
+            return {long:'Chemical',short:'Chemical'}
         }
         if(types.indexOf('gwas:SNP') !== -1) {
             return {long:'SNP',short:'SNP'}

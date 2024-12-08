@@ -3,7 +3,7 @@
 import cytoscape from "cytoscape"
 import fcose from "cytoscape-fcose"
 import ReactDOM from "react-dom"
-import { getPaginated } from "../../app/api";
+import { get, getPaginated } from "../../app/api";
 import GraphEdge from "../../model/GraphEdge";
 import GraphNodeRef from "../../model/GraphNodeRef";
 import DatasourceSelector from "../DatasourceSelector";
@@ -26,11 +26,11 @@ export default class GraphViewCtx {
     public allDatasources:Set<string> = new Set()
     public dsExclude:Set<string> = new Set()
 
-    public incoming_nodeIdToEdgeCountByType:Map<string,Map<string,number>> = new Map()
+    public incoming_nodeIdToEdgeCountByTypeAndDs:Map<string,any> = new Map()
     public incoming_nodeIdToEdgeIds:Map<string,Set<string>> = new Map()
     public incoming_expandedEdgeIds:Set<string> = new Set()
 
-    public outgoing_nodeIdToEdgeCountByType:Map<string,Map<string,number>> = new Map()
+    public outgoing_nodeIdToEdgeCountByTypeAndDs:Map<string,any> = new Map()
     public outgoing_nodeIdToEdgeIds:Map<string,Set<string>> = new Map()
     public outgoing_expandedEdgeIds:Set<string> = new Set()
 
@@ -38,6 +38,27 @@ export default class GraphViewCtx {
     public edges:Map<string, GraphEdge> = new Map()
 
     public root:GraphNodeRef|undefined
+
+    getTotalIncomingEdgeCountByType(nodeId:string) {
+        return this.getTotalEdgeCountByType(this.incoming_nodeIdToEdgeCountByTypeAndDs.get(nodeId));
+    }
+    getTotalOutgoingEdgeCountByType(nodeId:string) {
+        return this.getTotalEdgeCountByType(this.outgoing_nodeIdToEdgeCountByTypeAndDs.get(nodeId));
+    }
+    getTotalEdgeCountByType(edgeCountByTypeAndDs:any) {
+        let res = new Map<string, number>()
+        for(let type of Object.keys(edgeCountByTypeAndDs)) {
+            let edgeCountByDs = edgeCountByTypeAndDs[type]
+            let count = 0
+            for(let ds of Object.keys(edgeCountByDs)) {
+                if(this.dsExclude.has(ds))
+                    continue
+                count += edgeCountByDs[ds];
+            }
+            res.set(type, count)
+        }
+        return res
+    }
 
     constructor(
         container:HTMLDivElement,
@@ -61,9 +82,9 @@ export default class GraphViewCtx {
         this.root = root
 
         this.allDatasources = new Set()
-        this.incoming_nodeIdToEdgeCountByType = new Map()
+        this.incoming_nodeIdToEdgeCountByTypeAndDs = new Map()
         this.incoming_nodeIdToEdgeIds = new Map()
-        this.outgoing_nodeIdToEdgeCountByType = new Map()
+        this.outgoing_nodeIdToEdgeCountByTypeAndDs = new Map()
         this.outgoing_nodeIdToEdgeIds = new Map()
         this.nodes = new Map()
         this.edges = new Map()
@@ -96,8 +117,8 @@ export default class GraphViewCtx {
         let max_count = 0
         for(let node of this.nodes.values()) {
             let nodeId = node.getNodeId()
-            let outgoing_edgeCountByType = this.outgoing_nodeIdToEdgeCountByType.get(nodeId)
-            let incoming_edgeCountByType = this.incoming_nodeIdToEdgeCountByType.get(nodeId)
+            let outgoing_edgeCountByType = this.getTotalOutgoingEdgeCountByType(nodeId)
+            let incoming_edgeCountByType = this.getTotalIncomingEdgeCountByType(nodeId)
             for(let [edgeType,count] of outgoing_edgeCountByType!.entries()) {
                 if(count === 0)
                     continue
@@ -246,46 +267,29 @@ padding: '8px',
     async loadAll() {
 
         let toLoadShallow = Array.from(this.nodes.values()).filter(
-                node => this.outgoing_nodeIdToEdgeCountByType.get(node.getNodeId()) === undefined)
+                node => this.outgoing_nodeIdToEdgeCountByTypeAndDs.get(node.getNodeId()) === undefined)
 
         return Promise.all(toLoadShallow.map(node => this.loadShallow(node)))
     }
 
     async loadShallow(node:GraphNodeRef) {
 
-        let [incomingEdgeFacets,outgoingEdgeFacets] = (await Promise.all([
-            getPaginated<GraphEdge>(`api/v1/subgraphs/${this.subgraph}/nodes/${node.getEncodedNodeId()}/incoming_edges?` +
-                new URLSearchParams([
-                    ['size', '1'],
-                    ['facet', 'grebi:type'],
-                    ['facet', 'grebi:datasources'],
-                    ...Array.from(this.dsExclude).map(ds => ['-grebi:datasources', ds])
-                ] as any)
-            ),
-            getPaginated<GraphEdge>(`api/v1/subgraphs/${this.subgraph}/nodes/${node.getEncodedNodeId()}/outgoing_edges?` +
-                new URLSearchParams([
-                    ['size', '1'],
-                    ['facet', 'grebi:type'],
-                    ['facet', 'grebi:datasources'],
-                    ...Array.from(this.dsExclude).map(ds => ['-grebi:datasources', ds])
-                ] as any)
-            )
-        ])).map(r => r.facetFieldsToCounts)
+        let [incomingEdgeCounts,outgoingEdgeCounts] = (await Promise.all([
+            get<any>(`api/v1/subgraphs/${this.subgraph}/nodes/${node.getEncodedNodeId()}/incoming_edge_counts`),
+            get<any>(`api/v1/subgraphs/${this.subgraph}/nodes/${node.getEncodedNodeId()}/outgoing_edge_counts`)
+        ]))
 
-        let incomingEdgeTypeToCount = incomingEdgeFacets['grebi:type'] || {}
-        let outgoingEdgeTypeToCount = outgoingEdgeFacets['grebi:type'] || {}
+        this.incoming_nodeIdToEdgeCountByTypeAndDs.set(node.getNodeId(), incomingEdgeCounts);
+        this.outgoing_nodeIdToEdgeCountByTypeAndDs.set(node.getNodeId(), outgoingEdgeCounts);
 
-        console.log(JSON.stringify(incomingEdgeFacets))
-        console.log(JSON.stringify(outgoingEdgeFacets))
-
-        this.incoming_nodeIdToEdgeCountByType.set(node.getNodeId(), new Map(Object.entries(incomingEdgeTypeToCount)))
-        this.outgoing_nodeIdToEdgeCountByType.set(node.getNodeId(), new Map(Object.entries(outgoingEdgeTypeToCount)))
-
-        for(let ds of (new Set([
-            ...Object.keys(incomingEdgeFacets['grebi:datasources'] || {}),
-            ...Object.keys(outgoingEdgeFacets['grebi:datasources'] || {})
-        ]))) {
-            this.allDatasources.add(ds)
+        for(let edgeTypeToCountByDs of [incomingEdgeCounts, outgoingEdgeCounts]) {
+            for(let edgeType of Object.keys(edgeTypeToCountByDs)) {
+                let dsToCount = edgeTypeToCountByDs[edgeType]
+                for(let ds of Object.keys(dsToCount)) {
+                    //let count = dsToCount[ds]
+                    this.allDatasources.add(ds)
+                }
+            }
         }
     }
 

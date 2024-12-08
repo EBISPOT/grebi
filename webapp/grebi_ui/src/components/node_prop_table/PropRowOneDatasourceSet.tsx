@@ -21,7 +21,7 @@ export default function PropRowOneDatasourceSet(params:{subgraph:string,node:Gra
               </Grid>
               <Grid item xs={12} style={{padding:'8px'}}>
                 <div className="pl-2 mb-2">
-                <PropVals subgraph={subgraph} node={node} prop={prop} values={values} />
+                <PropVals subgraph={subgraph} refs={node.getRefs()} values={values} />
                 </div>
               </Grid>
            </Fragment>

@@ -37,7 +37,7 @@ export default function PropRowManyDatasourceSets(params:{subgraph:string,node:G
                       return <Fragment>
                       <Grid item xs={12} style={{padding:'8px'}}>
                         <DatasourceTags dss={values[0].datasources} />
-                        <PropVals subgraph={subgraph} node={node} prop={prop} values={values} />
+                        <PropVals subgraph={subgraph} refs={node.getRefs()} values={values} />
                       </Grid>
                     </Fragment>
                   })
@@ -61,7 +61,7 @@ export default function PropRowManyDatasourceSets(params:{subgraph:string,node:G
                         </Grid>
                         <Grid item xs={12}>
                         <div className={"pl-4" + (i == dsSetsSorted.length-1 ? " mb-2" : "")}>
-                          <PropVals subgraph={subgraph} node={node} prop={prop} values={values} />
+                          <PropVals subgraph={subgraph} refs={node.getRefs()} values={values} />
                           </div>
                         </Grid>
                       </Fragment>

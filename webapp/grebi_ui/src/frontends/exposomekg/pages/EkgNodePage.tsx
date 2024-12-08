@@ -69,7 +69,7 @@ export default function EkgNodePage() {
             <Grid item xs={2}>
           <Tabs orientation="horizontal" value={tab} aria-label="basic tabs example" className="border-green justify-center" sx={{ borderBottom: 1, borderColor: 'divider' }} onChange={(e, tab) => setSearchParams({tab})}>
             <Tab label="Links" icon={<Share/>} value="links" />
-            <Tab label="Properties" icon={<FormatListBulleted/>} value="properties" />
+            <Tab label="Property View" icon={<FormatListBulleted/>} value="properties" />
             <Tab label="Edges In" icon={<CallReceived/>} value="edges_in" />
             <Tab label="Edges Out" icon={<CallMade/>} value="edges_out" />
             <Tab label="Graph" icon={<Share/>} value="graph" />
