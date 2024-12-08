@@ -4,9 +4,9 @@ import ReactDOM, { render } from "react-dom"
 import { get, getPaginated } from "../../app/api";
 import GraphEdge from "../../model/GraphEdge";
 import GraphNodeRef from "../../model/GraphNodeRef";
-import DatasourceSelector from "../DatasourceSelector";
 import LoadingOverlay from "../LoadingOverlay";
 import CyWrapper from "./CyWrapper";
+import GraphViewControls from "./GraphViewControls";
 
 let formatter = Intl.NumberFormat('en', { notation: 'compact' });
 
@@ -127,7 +127,8 @@ export default class GraphViewCtx {
                         count,
                         size: (MIN_COUNT_NODE_SIZE + (count / max_count) * (MAX_COUNT_NODE_SIZE-MIN_COUNT_NODE_SIZE)),
                         datasources,
-                        dsToCount
+                        dsToCount,
+                        action: {type:'expandEdge', nodeId:nodeId, direction:'outgoing', edgeType}
                     }
                 } as any)
                 elements.push({
@@ -138,10 +139,15 @@ export default class GraphViewCtx {
                         source: nodeId,
                         target: countNodeId, 
                         label: edgeType,
-                        datasources
+                        datasources,
+                        action: {type:'expandEdge', nodeId:nodeId, direction:'outgoing', edgeType}
                     }
                 } as any)
-                constraints.push({ left: nodeId, right: countNodeId })
+                if(count <= MAX_CLICKABLE_COUNT) {
+                    constraints.push({ left: nodeId, right: countNodeId })
+                } else {
+                    constraints.push({ top: nodeId, bottom: countNodeId })
+                }
             }
             for(let [edgeType,{datasources,count,dsToCount}] of incoming_edgeCountByType!.entries()) {
                 if(count === 0)
@@ -155,7 +161,8 @@ export default class GraphViewCtx {
                         count,
                         size: (MIN_COUNT_NODE_SIZE + (count / max_count) * (MAX_COUNT_NODE_SIZE-MIN_COUNT_NODE_SIZE)),
                         datasources,
-                        dsToCount
+                        dsToCount,
+                        action: {type:'expandEdge', nodeId:nodeId, direction:'incoming', edgeType}
                     },
                 } as any)
                 elements.push({
@@ -166,10 +173,15 @@ export default class GraphViewCtx {
                         source: countNodeId,
                         target: nodeId, 
                         label: edgeType,
-                        datasources
+                        datasources,
+                        action: {type:'expandEdge', nodeId:nodeId, direction:'incoming', edgeType}
                     }
                 } as any)
-                constraints.push({ right: nodeId, left: countNodeId })
+                if(count <= MAX_CLICKABLE_COUNT) {
+                    constraints.push({ right: nodeId, left: countNodeId })
+                } else {
+                    constraints.push({ bottom: nodeId, top: countNodeId })
+                }
             }
         }
 
@@ -227,8 +239,8 @@ color:'gray',
                         'curve-style': 'bezier',
                          "text-rotation": "autorotate",
                         //  'font-weight': 'bold',
-                        //  'text-background-opacity': 1,
-                        //  'text-background-color': 'white',
+                         'text-background-opacity': 1,
+                         'text-background-color': 'white',
                         //  'text-border-width': 1,
                         //  'text-border-color': 'black',
                         //  'text-background-padding': '8px',
@@ -272,13 +284,15 @@ color:'gray',
                     style:{
                     'line-color': '#7323b7',
                     'target-arrow-color': '#7323b7',
+                    'color': '#7323b7'
                     }
                 },
                 {
                     selector: 'edge.ds_onto_highlight',
                     style:{
                     'line-color': '#00827c',
-                    'target-arrow-color': '#00827c'
+                    'target-arrow-color': '#00827c',
+                    'color': '#00827c',
                     }
                 }
             ];
@@ -322,12 +336,15 @@ color:'gray',
             this.cy.destroy()
 
         this.cy = new CyWrapper(this.graphDiv, elements, style, layout)
+        this.cy.onClickElement = (id:string) => {
+            console.log(id)
+        }
 
         //this.dsSelectorDiv.innerHTML = ''
 
         let renderDsSelector = () => {
             ReactDOM.render(
-                <DatasourceSelector
+                <GraphViewControls
                     datasources={Array.from(this.allDatasources)}
                     dsEnabled={Array.from(this.allDatasources).filter(el => !this.dsExclude.has(el))}
                     setDsEnabled={async (dss:string[]) => {

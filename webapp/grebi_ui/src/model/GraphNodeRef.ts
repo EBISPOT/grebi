@@ -92,6 +92,9 @@ export default class GraphNodeRef {
         if(types.indexOf('biolink:ChemicalEntity') !== -1) {
             return {long:'Chemical',short:'Chemical'}
         }
+        if(types.indexOf('biolink:Disease') !== -1) {
+            return {long:'Disease',short:'Disease'}
+        }
         if(types.indexOf('gwas:SNP') !== -1) {
             return {long:'SNP',short:'SNP'}
         }
@@ -102,16 +105,6 @@ export default class GraphNodeRef {
             return {long:'Person',short:'Person'}
         }
         if(types.indexOf('ols:Class') !== -1) {
-            let ancestors:any[] = PropVal.arrFrom(this.props['ols:directAncestor']).map(a => a.value)
-            if(ancestors.indexOf("chebi:36080") !== -1) {
-                return {long:'Protein',short:'Protein'}
-            }
-            if(ancestors.indexOf("chebi:24431") !== -1) {
-                return {long:'Chemical',short:'Chemical'}
-            }
-            if(ancestors.indexOf("mondo:0000001") !== -1 || ancestors.indexOf("efo:0000408") !== -1) {
-                return {long:'Disease',short:'Disease'}
-            }
             return {long:'Ontology Class',short:'Class'}
         }
         if(types.indexOf('ols:Property') !== -1) {

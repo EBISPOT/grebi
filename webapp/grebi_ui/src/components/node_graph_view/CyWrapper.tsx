@@ -12,10 +12,16 @@ export default class CyWrapper {
 
     locked:boolean = false
 
+    onClickElement:((element:any)=>void) = () => {}
+
     constructor(container:HTMLDivElement, elements:any[], style:any, layout:any) {
 
         layout.animate = false
         this.cy = cytoscape({ container, elements, style, layout });
+
+        this.cy.on('click', 'any', (event:any) => {
+            this.onClickElement(event.target)
+        });
 
         for(let elem of elements) {
             this.elementSnapshots.set(elem.data.id, JSON.stringify(elem))
