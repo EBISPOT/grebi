@@ -1,6 +1,8 @@
 
 FROM maven:3.9.6-amazoncorretto-17
 
+RUN apt-get update && apt-get install -y rsync
+
 COPY . /opt/
 RUN cd /opt/ && ls && mvn clean package assembly:single -DskipTests
 
