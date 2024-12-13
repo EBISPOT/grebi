@@ -1,6 +1,7 @@
 
 use grebi_shared::get_id;
 use grebi_shared::json_lexer::JsonToken;
+use rocksdb::WaitForCompactOptions;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs::File;
@@ -74,5 +75,6 @@ fn main() {
 
     let start_time2 = std::time::Instant::now();
     db.compact_range(None::<&[u8]>, None::<&[u8]>);
+    db.wait_for_compact(&WaitForCompactOptions::default()).unwrap();
     eprintln!("Compacting took {} seconds", start_time2.elapsed().as_secs());
 }
