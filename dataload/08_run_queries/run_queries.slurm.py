@@ -39,7 +39,7 @@ def main():
             '--writable-tmpfs',
             '--network=none',
             '--env NEO4J_AUTH=none',
-            'docker://ghcr.io/ebispot/grebi_neo4j_with_python:latest',
+            'docker://ghcr.io/ebispot/grebi_neo4j_with_extras:latest',
             'python3 /run_queries.py'
         ])
     else:
@@ -52,7 +52,7 @@ def main():
             '-v ' + shlex.quote(neo_logs_path) + ':/logs',
             '-v ' + os.path.abspath('./08_run_queries/run_queries.dockerpy') + ':/run_queries.py',
             '-e NEO4J_AUTH=none',
-            'ghcr.io/ebispot/grebi_neo4j_with_python:latest',
+            'ghcr.io/ebispot/grebi_neo4j_with_extras:latest',
             'python3 /run_queries.py'
         ])
 
