@@ -10,5 +10,6 @@ flate2 = {version="1.0.28", features=["zlib-ng"]}
 serde_json = { version = "1.0.108", features=["preserve_order"] }
 lz4 = "1.28.0"
 rusqlite = "0.32.1"
+jemallocator = "0.5.4"
 
 
