@@ -14,6 +14,8 @@ use rusqlite::{params, Connection, Transaction};
 use grebi_shared::json_lexer::{JsonTokenType};
 use lz4::{EncoderBuilder};
 
+#[global_allocator]
+static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 #[derive(clap::Parser, Debug)]
 #[command(author, version, about, long_about = None)]
