@@ -1,6 +1,7 @@
 
 use grebi_shared::get_id;
 use rusqlite::Statement;
+use rusqlite::ToSql;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::io::StdinLock;
@@ -27,18 +28,26 @@ fn insert(stmt:&mut Statement, reader:&mut BufReader<StdinLock<>>) {
     let start_time = std::time::Instant::now();
 
 
-    let mut line:Vec<u8> = Vec::new();
     let mut n:i64 = 0;
+
+
+    let batch_size = 1000;
+    let mut param_stack: Vec<_> = Vec::new();
 
     loop {
 
-        line.clear();
+        let mut line:Vec<u8> = Vec::new();
         reader.read_until(b'\n', &mut line).unwrap();
 
         if line.len() == 0 {
             eprintln!("saw {} subjects", n);
             break;
         }
+
+        let id = {
+            let tmp_id = get_id(&line);
+            tmp_id.to_owned()
+        };
 
         let compressed =  {
             let mut enc = lz4::EncoderBuilder::new().build(Vec::new()).unwrap();
@@ -48,9 +57,15 @@ fn insert(stmt:&mut Statement, reader:&mut BufReader<StdinLock<>>) {
             v
         };
 
-        let id = get_id(&line);
+        param_stack.push(id);
+        param_stack.push(compressed);
 
-        stmt.execute(params![id, compressed]).unwrap();
+        if param_stack.len() >= 2*batch_size {
+            stmt.execute(rusqlite::params_from_iter(param_stack.iter())).unwrap();
+            param_stack.clear();
+        }
+
+        //stmt.execute(params![id, compressed]).unwrap();
 
         n = n + 1;
 
@@ -58,6 +73,11 @@ fn insert(stmt:&mut Statement, reader:&mut BufReader<StdinLock<>>) {
             eprintln!("{}", n);
         }
     }
+
+    if param_stack.len() > 0 {
+        stmt.execute(rusqlite::params_from_iter(param_stack.iter())).unwrap();
+    }
+
     eprintln!("Inserting took {} seconds", start_time.elapsed().as_secs());
 
 
