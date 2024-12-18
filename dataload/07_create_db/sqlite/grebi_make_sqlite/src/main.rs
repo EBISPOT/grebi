@@ -8,7 +8,6 @@ use std::io::BufWriter;
 use std::io::StdinLock;
 use std::io;
 use std::io::Write;
-use std::time::Duration;
 use clap::Parser;
 
 use rusqlite::{params, Connection, Transaction};
@@ -36,10 +35,7 @@ struct Args {
     page_size: usize,
 
     #[arg(long)]
-    cache_size: usize,
-
-    #[arg(long)]
-    backup_pages_per_step: i32
+    cache_size: usize
 }
 
 fn insert(
@@ -129,7 +125,7 @@ fn main() {
     let stdin = io::stdin().lock();
     let mut reader = BufReader::new(stdin);
 
-    let mut conn = Connection::open_in_memory().unwrap();
+    let mut conn = Connection::open(args.db_path).unwrap();
 
     let cache_size = args.cache_size;
     let page_size = args.page_size;
@@ -167,16 +163,4 @@ fn main() {
     tx.commit().unwrap();
     eprintln!("Committing took {} seconds", start_time2.elapsed().as_secs());
 
-
-    let start_time3 = std::time::Instant::now();
-    let mut save_to = Connection::open(args.db_path).unwrap();
-
-    let backup = rusqlite::backup::Backup::new(&conn, &mut save_to).unwrap();
-
-    backup.run_to_completion(args.backup_pages_per_step, Duration::new(0,0), Some(|progress| {
-        eprintln!("Backup progress: {:?}", progress);
-    })).unwrap();
-
-    eprintln!("Backup took {} seconds", start_time3.elapsed().as_secs());
-    
 }
