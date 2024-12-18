@@ -26,18 +26,20 @@ struct Args {
     compression_level: u32,
 
     #[arg(long)]
-    batch_size: u32
+    batch_size: usize
 }
 
-fn insert(stmt:&mut Statement, reader:&mut BufReader<StdinLock<>>, compression_level:u32, batch_size:u32) {
+fn insert(
+    stmt_batch:&mut Statement,
+    stmt_single:&mut Statement,
+    reader:&mut BufReader<StdinLock<>>,
+    compression_level:u32,
+    batch_size:usize) {
 
     let start_time = std::time::Instant::now();
 
 
     let mut n:i64 = 0;
-
-
-    let batch_size = 1000;
     let mut param_stack: Vec<_> = Vec::new();
 
     loop {
@@ -66,12 +68,10 @@ fn insert(stmt:&mut Statement, reader:&mut BufReader<StdinLock<>>, compression_l
         param_stack.push(id);
         param_stack.push(compressed);
 
-        if param_stack.len() >= 2*batch_size {
-            stmt.execute(rusqlite::params_from_iter(param_stack.iter())).unwrap();
+        if param_stack.len() == 2*batch_size {
+            stmt_batch.execute(rusqlite::params_from_iter(param_stack.iter())).unwrap();
             param_stack.clear();
         }
-
-        //stmt.execute(params![id, compressed]).unwrap();
 
         n = n + 1;
 
@@ -80,12 +80,18 @@ fn insert(stmt:&mut Statement, reader:&mut BufReader<StdinLock<>>, compression_l
         }
     }
 
+    // insert the last ones if we didn't reach batch size
     if param_stack.len() > 0 {
-        stmt.execute(rusqlite::params_from_iter(param_stack.iter())).unwrap();
+        let mut i = 0;
+        while i < param_stack.len() {
+            let id = &param_stack[i];
+            let val = &param_stack[i+1];
+            stmt_single.execute(params![id, val]).unwrap();
+            i += 2;
+        }
     }
 
     eprintln!("Inserting took {} seconds", start_time.elapsed().as_secs());
-
 
 }
 
@@ -117,11 +123,13 @@ fn main() {
     let tx = conn.transaction().unwrap();
 
     {
-        let mut stmt = tx
-        .prepare_cached("INSERT INTO id_to_json VALUES (?, ?)")
-        .unwrap();
+        let mut stmt_batch = tx
+        .prepare_cached(("INSERT INTO id_to_json VALUES (?, ?)".to_owned()
+        + &", (?, ?)".repeat(args.batch_size - 1)).as_str()).unwrap();
 
-        insert(&mut stmt, &mut reader, args.compression_level, args.batch_size);
+        let mut stmt_single = tx.prepare_cached("INSERT INTO id_to_json VALUES (?, ?)").unwrap();
+
+        insert(&mut stmt_batch, &mut stmt_single, &mut reader, args.compression_level, args.batch_size);
     }
 
     let start_time2 = std::time::Instant::now();
