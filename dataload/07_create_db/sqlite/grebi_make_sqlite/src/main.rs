@@ -29,7 +29,13 @@ struct Args {
     compression_level: u32,
 
     #[arg(long)]
-    batch_size: usize
+    batch_size: usize,
+
+    #[arg(long)]
+    page_size: usize,
+
+    #[arg(long)]
+    cache_size: usize
 }
 
 fn insert(
@@ -121,12 +127,16 @@ fn main() {
 
     let mut conn = Connection::open(args.db_path).unwrap();
 
+    let cache_size = args.cache_size;
+    let page_size = args.page_size;
+
     conn.execute_batch(
-        "PRAGMA journal_mode = OFF;
+        format!("PRAGMA journal_mode = OFF;
             PRAGMA synchronous = 0;
-            PRAGMA cache_size = 1000000;
+            PRAGMA cache_size = {cache_size};
+            PRAGMA page_size = {page_size};
             PRAGMA locking_mode = EXCLUSIVE;
-            PRAGMA temp_store = MEMORY;",
+            PRAGMA temp_store = MEMORY;").as_str()
     )
     .expect("PRAGMA");
     conn.execute(
