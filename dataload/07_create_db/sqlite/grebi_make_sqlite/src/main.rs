@@ -2,6 +2,8 @@
 use grebi_shared::get_id;
 use rusqlite::Statement;
 use rusqlite::ToSql;
+use snap::raw::max_compress_len;
+use core::slice;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::io::BufWriter;
@@ -57,6 +59,11 @@ fn insert(
     let mut param_locs: Vec<(usize, usize)> = Vec::new();
     let mut line:Vec<u8> = Vec::new();
 
+    let mut builder = lz4::EncoderBuilder::new();
+    builder.level(compression_level);
+
+    let mut enc = snap::raw::Encoder::new();
+
     loop {
 
         line.clear();
@@ -73,10 +80,18 @@ fn insert(
         let id_end = buf.len();
 
         let data_start = buf.len();
-        {
-            let mut enc = lz4::EncoderBuilder::new().level(compression_level).build(BufWriter::new(&mut buf)).unwrap();
+        /*{
+            let mut enc = builder.build(BufWriter::new(&mut buf)).unwrap();
             enc.write(&line).unwrap();
             enc.finish().1.unwrap();
+        }*/
+        let max_size_needed = max_compress_len(line.len());
+        buf.reserve(max_size_needed);
+
+        unsafe {
+            let p = buf.as_mut_ptr().add(buf.len());
+            let compressed_size = snap::raw::Encoder::compress(&mut enc, &line, slice::from_raw_parts_mut(p, max_size_needed)).unwrap();
+            buf.set_len(buf.len() + compressed_size);
         }
         let data_end = buf.len();
 
