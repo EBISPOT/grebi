@@ -20,10 +20,16 @@ use lz4::{EncoderBuilder};
 struct Args {
 
     #[arg(long)]
-    db_path: String
+    db_path: String,
+
+    #[arg(long)]
+    compression_level: u32,
+
+    #[arg(long)]
+    batch_size: u32
 }
 
-fn insert(stmt:&mut Statement, reader:&mut BufReader<StdinLock<>>) {
+fn insert(stmt:&mut Statement, reader:&mut BufReader<StdinLock<>>, compression_level:u32, batch_size:u32) {
 
     let start_time = std::time::Instant::now();
 
@@ -50,7 +56,7 @@ fn insert(stmt:&mut Statement, reader:&mut BufReader<StdinLock<>>) {
         };
 
         let compressed =  {
-            let mut enc = lz4::EncoderBuilder::new().build(Vec::new()).unwrap();
+            let mut enc = lz4::EncoderBuilder::new().level(compression_level).build(Vec::new()).unwrap();
             enc.write(&line).unwrap();
             let (v, r) = enc.finish();
             r.unwrap();
@@ -115,7 +121,7 @@ fn main() {
         .prepare_cached("INSERT INTO id_to_json VALUES (?, ?)")
         .unwrap();
 
-        insert(&mut stmt, &mut reader);
+        insert(&mut stmt, &mut reader, args.compression_level, args.batch_size);
     }
 
     let start_time2 = std::time::Instant::now();
