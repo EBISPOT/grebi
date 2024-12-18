@@ -49,10 +49,11 @@ fn insert(
 
     let mut buf:Vec<u8> = Vec::new();
     let mut param_locs: Vec<(usize, usize)> = Vec::new();
+    let mut line:Vec<u8> = Vec::new();
 
     loop {
 
-        let mut line:Vec<u8> = Vec::new();
+        line.clear();
         reader.read_until(b'\n', &mut line).unwrap();
 
         if line.len() == 0 {
