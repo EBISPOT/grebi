@@ -34,16 +34,9 @@ fn main() {
     let stdout = io::stdout().lock();
     let mut writer = BufWriter::new(stdout);
 
-    let start_time = std::time::Instant::now();
-
     let mut n:i64 = 0;
 
-    let mut start_time3 = std::time::Instant::now();
-
-    let mut buf:Vec<u8> = Vec::new();
-    let mut param_locs: Vec<(usize, usize)> = Vec::new();
     let mut line:Vec<u8> = Vec::new();
-
 
     loop {
 
@@ -55,17 +48,21 @@ fn main() {
             break;
         }
 
+        n = n + 1;
+
         let id = get_id(&line);
 
+        writer.write_all(&(id.len() as u32).to_le_bytes()).unwrap();
         writer.write_all(id).unwrap();
         writer.write_all(b"\0").unwrap();
 
         let mut enc = ZlibEncoder::new(Vec::new(), Compression::new(9));
+
         enc.write_all(&line).unwrap();
         let compressed = enc.finish().unwrap();
 
+        writer.write_all(&(compressed.len() as u32).to_le_bytes()).unwrap();
         writer.write_all(&compressed).unwrap();
-        writer.write_all(b"\0").unwrap();
     }
 
 }

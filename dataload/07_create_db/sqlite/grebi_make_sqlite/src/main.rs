@@ -9,6 +9,8 @@ use std::io::BufWriter;
 use std::io::StdinLock;
 use std::io;
 use std::io::Write;
+use std::io::Read;
+use std::ptr::slice_from_raw_parts;
 use clap::Parser;
 
 use rusqlite::{params, Connection, Transaction};
@@ -26,9 +28,6 @@ struct Args {
     db_path: String,
 
     #[arg(long)]
-    compression_level: u32,
-
-    #[arg(long)]
     batch_size: usize,
 
     #[arg(long)]
@@ -38,15 +37,10 @@ struct Args {
     cache_size: usize
 }
 
-fn worst_case_max_compressed_size(input_size: usize) -> usize {
-    input_size + ((input_size + 7) / 8) + 5
-}
-
 fn insert(
     stmt_batch:&mut Statement,
     stmt_single:&mut Statement,
     reader:&mut BufReader<StdinLock<>>,
-    compression_level:u32,
     batch_size:usize) {
 
     let start_time = std::time::Instant::now();
@@ -59,61 +53,49 @@ fn insert(
 
     let mut buf:Vec<u8> = Vec::new();
     let mut param_locs: Vec<(usize, usize)> = Vec::new();
-    let mut line:Vec<u8> = Vec::new();
 
-    let mut builder = lz4::EncoderBuilder::new();
-    builder.level(compression_level);
-
-    let mut enc = flate2::Compress::new(flate2::Compression::new(compression_level), false);
+    let mut id:Vec<u8> = Vec::new();
+    let mut blob:Vec<u8> = Vec::new();
 
     loop {
 
-        line.clear();
-        reader.read_until(b'\n', &mut line).unwrap();
+        id.clear();
+        blob.clear();
 
-        if line.len() == 0 {
+        let id_size:u32 = 0;
+        reader.read(&mut id_size.to_le_bytes()).unwrap();
+
+        if id_size == 0 {
             eprintln!("saw {} lines", n);
             break;
         }
 
         let id_start = buf.len();
-        let id = get_id(&line);
-        buf.extend(id.iter());
-        let id_end = buf.len();
-
-        let data_start = buf.len();
-        /*{
-            let mut enc = builder.build(BufWriter::new(&mut buf)).unwrap();
-            enc.write(&line).unwrap();
-            enc.finish().1.unwrap();
-        }*/
-        let max_size_needed = worst_case_max_compressed_size(line.len());
-        buf.reserve(max_size_needed);
+        buf.reserve(id_size as usize);
 
         unsafe {
-            let p = buf.as_mut_ptr().add(buf.len());
-
-            enc.reset();
-            let res = enc.compress( &line,
-                slice::from_raw_parts_mut(p, max_size_needed), flate2::FlushCompress::Finish)
-                .unwrap();
-
-            if res != flate2::Status::StreamEnd {
-                panic!("compression failed; expected StreamEnd got {:?}", res);
-            }
-
-            if enc.total_in() != line.len() as u64 {
-                panic!("compression failed; expected {} bytes read got {}", line.len(), enc.total_in());
-            }
-
-            let compressed_size = enc.total_out() as usize;
-
-            buf.set_len(buf.len() + compressed_size);
+            reader.read_exact(
+                slice::from_raw_parts_mut( buf.as_mut_ptr().add(buf.len()), id_size as usize)
+            ).unwrap();
+            buf.set_len(buf.len() + id_size as usize);
         }
-        let data_end = buf.len();
 
-        param_locs.push((id_start, id_end));
-        param_locs.push((data_start, data_end));
+
+        let blob_size:u32 = 0;
+        reader.read(&mut blob_size.to_le_bytes()).unwrap();
+
+        let blob_start = buf.len();
+        buf.reserve(blob_size as usize);
+
+        unsafe {
+            reader.read_exact(
+                slice::from_raw_parts_mut( buf.as_mut_ptr().add(buf.len()), blob_size as usize)
+            ).unwrap();
+            buf.set_len(buf.len() + blob_size as usize);
+        }
+
+        param_locs.push((id_start, id_start+(id_size as usize)));
+        param_locs.push((blob_start, blob_start+(blob_size as usize)));
 
         if param_locs.len() == 2*batch_size {
             stmt_batch.execute(
@@ -188,7 +170,7 @@ fn main() {
 
         let mut stmt_single = tx.prepare_cached("INSERT INTO id_to_json VALUES (?, ?)").unwrap();
 
-        insert(&mut stmt_batch, &mut stmt_single, &mut reader, args.compression_level, args.batch_size);
+        insert(&mut stmt_batch, &mut stmt_single, &mut reader, args.batch_size);
     }
 
     let start_time2 = std::time::Instant::now();
