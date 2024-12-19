@@ -2,7 +2,6 @@
 use grebi_shared::get_id;
 use rusqlite::Statement;
 use rusqlite::ToSql;
-use snap::raw::max_compress_len;
 use core::slice;
 use std::io::BufReader;
 use std::io::BufRead;
@@ -15,7 +14,6 @@ use clap::Parser;
 use rusqlite::{params, Connection, Transaction};
 
 use grebi_shared::json_lexer::{JsonTokenType};
-use lz4::{EncoderBuilder};
 
 #[global_allocator]
 static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -40,6 +38,10 @@ struct Args {
     cache_size: usize
 }
 
+fn worst_case_max_compressed_size(input_size: usize) -> usize {
+    input_size + ((input_size + 7) / 8) + 5
+}
+
 fn insert(
     stmt_batch:&mut Statement,
     stmt_single:&mut Statement,
@@ -62,7 +64,7 @@ fn insert(
     let mut builder = lz4::EncoderBuilder::new();
     builder.level(compression_level);
 
-    let mut enc = snap::raw::Encoder::new();
+    let mut enc = flate2::Compress::new(flate2::Compression::new(compression_level), false);
 
     loop {
 
@@ -85,12 +87,27 @@ fn insert(
             enc.write(&line).unwrap();
             enc.finish().1.unwrap();
         }*/
-        let max_size_needed = max_compress_len(line.len());
+        let max_size_needed = worst_case_max_compressed_size(line.len());
         buf.reserve(max_size_needed);
 
         unsafe {
             let p = buf.as_mut_ptr().add(buf.len());
-            let compressed_size = snap::raw::Encoder::compress(&mut enc, &line, slice::from_raw_parts_mut(p, max_size_needed)).unwrap();
+
+            enc.reset();
+            let res = enc.compress( &line,
+                slice::from_raw_parts_mut(p, max_size_needed), flate2::FlushCompress::Finish)
+                .unwrap();
+
+            if res != flate2::Status::StreamEnd {
+                panic!("compression failed; expected StreamEnd got {:?}", res);
+            }
+
+            if enc.total_in() != line.len() as u64 {
+                panic!("compression failed; expected {} bytes read got {}", line.len(), enc.total_in());
+            }
+
+            let compressed_size = enc.total_out() as usize;
+
             buf.set_len(buf.len() + compressed_size);
         }
         let data_end = buf.len();
