@@ -32,7 +32,7 @@ public class GrebiApi {
         GrebiSolrRepo solr = null;
         GrebiSummaryRepo summary= null;
 
-        Set<String> rocksDbSubgraphs = null;
+        Set<String> sqliteSubgraphs = null;
         Set<String> solrSubgraphs = null;
         Set<String> summarySubgraphs = null;
         Set<String> neoSubgraphs = null;
@@ -41,12 +41,12 @@ public class GrebiApi {
             try {
                 solr = new GrebiSolrRepo();
                 summary = new GrebiSummaryRepo();
-                rocksDbSubgraphs = (new ResolverClient()).getSubgraphs();
+                sqliteSubgraphs = (new ResolverClient()).getSubgraphs();
                 solrSubgraphs = solr.getSubgraphs();
                 summarySubgraphs = summary.getSubgraphs();
-                if(new HashSet<>(List.of(rocksDbSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
-                    throw new RuntimeException("RocksDB/Solr/the summary jsons do not seem to contain the same subgraphs. Found: "
-                            + String.join(",", rocksDbSubgraphs) + " for RocksDB (from resolver service) and "
+                if(new HashSet<>(List.of(sqliteSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
+                    throw new RuntimeException("SQLite/Solr/the summary jsons do not seem to contain the same subgraphs. Found: "
+                            + String.join(",", sqliteSubgraphs) + " for SQLite (from resolver service) and "
                             + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and "
                             + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server)"
                     );
@@ -67,10 +67,10 @@ public class GrebiApi {
             try {
                 neo = new GrebiNeoRepo();
                 neoSubgraphs = neo.getSubgraphs();
-                if(new HashSet<>(List.of(rocksDbSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
+                if(new HashSet<>(List.of(sqliteSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
                     neo = null;
-                    throw new RuntimeException("RocksDB/Solr/the summary jsons/neo4j do not seem to contain the same subgraphs. Found: "
-                            + String.join(",", rocksDbSubgraphs) + " for RocksDB (from resolver service) and "
+                    throw new RuntimeException("SQLite/Solr/the summary jsons/neo4j do not seem to contain the same subgraphs. Found: "
+                            + String.join(",", sqliteSubgraphs) + " for SQLite (from resolver service) and "
                             + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and "
                             + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server) and "
                             + String.join(",", neoSubgraphs) + " for neo4j"

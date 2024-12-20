@@ -12,11 +12,11 @@ export default function EbiDownloadsPage() {
       <EbiHeader section="downloads" />
       <main className="container mx-auto px-4 my-8">
         <div className="text-2xl font-bold my-6">
-          Downloading Knowledge Graph Releases
+          Downloading Knowledge Graph Exports
         </div>
         <div>
           <p className="px-1 mb-2 text-justify">
-            Neo4j, Solr, and RocksDB databases of the KG can be downloaded from&thinsp;
+            Neo4j and Solr databases exports of the KG can be downloaded from&thinsp;
             <a
               className="link-default"
               href="https://ftp.ebi.ac.uk/pub/databases/spot/kg/"

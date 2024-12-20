@@ -5,7 +5,6 @@ import groovy.json.JsonSlurper
 jsonSlurper = new JsonSlurper()
 
 params.tmp = "$GREBI_TMP"
-params.fast_tmp = "$GREBI_FAST_TMP"
 params.home = "$GREBI_DATALOAD_HOME"
 params.config = "$GREBI_CONFIG"
 params.subgraph = "$GREBI_SUBGRAPH"
@@ -326,7 +325,10 @@ process create_sqlite {
     set -Eeuo pipefail
     cat ${compressed_blobs.iterator().join(" ")} \
         | ${params.home}/target/release/grebi_make_sqlite \
-            --db-path ${params.subgraph}.sqlite3
+            --db-path ${params.subgraph}.sqlite3 \
+            --batch-size 450 \
+            --page-size 16384 \
+            --cache-size 1000000
     """
 }
 
@@ -636,7 +638,7 @@ process copy_sqlite_to_ftp {
     #!/usr/bin/env bash
     set -Eeuo pipefail
     mkdir -p /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}
-    cp -f rocksdb.tgz /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}/${params.subgraph}.sqlite3
+    cp -f ${params.subgraph}.sqlite3 /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}/${params.subgraph}.sqlite3
     """
 }
 

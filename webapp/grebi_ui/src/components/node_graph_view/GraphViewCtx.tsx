@@ -336,8 +336,8 @@ color:'gray',
             this.cy.destroy()
 
         this.cy = new CyWrapper(this.graphDiv, elements, style, layout)
-        this.cy.onClickElement = (id:string) => {
-            console.log(id)
+        this.cy.onClickElement = (elem:any) => {
+            elem.data('action') && this.doAction(elem.data('action'))
         }
 
         //this.dsSelectorDiv.innerHTML = ''
@@ -461,5 +461,20 @@ color:'gray',
         }
     }
 
+    doAction(action:any) {
+
+        let { type, nodeId } = action
+
+        if(type === 'expandEdge') {
+
+            let { direction, edgeType } = action
+
+            if(direction === 'incoming') {
+                this.incoming_expandedEdgeIds.add(edgeType)
+            } else {
+                this.outgoing_expandedEdgeIds.add(edgeType)
+            }
+        }
+    }
 
 }

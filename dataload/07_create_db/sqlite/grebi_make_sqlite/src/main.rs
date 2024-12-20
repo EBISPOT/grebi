@@ -1,21 +1,12 @@
-
-use grebi_shared::get_id;
 use rusqlite::Statement;
-use rusqlite::ToSql;
 use core::slice;
 use std::io::BufReader;
-use std::io::BufRead;
-use std::io::BufWriter;
 use std::io::StdinLock;
 use std::io;
-use std::io::Write;
 use std::io::Read;
-use std::ptr::slice_from_raw_parts;
 use clap::Parser;
 
 use rusqlite::{params, Connection, Transaction};
-
-use grebi_shared::json_lexer::{JsonTokenType};
 
 #[global_allocator]
 static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -54,21 +45,19 @@ fn insert(
     let mut buf:Vec<u8> = Vec::new();
     let mut param_locs: Vec<(usize, usize)> = Vec::new();
 
-    let mut id:Vec<u8> = Vec::new();
-    let mut blob:Vec<u8> = Vec::new();
-
     loop {
 
-        id.clear();
-        blob.clear();
+        let mut size_buf = [0u8; 4];
 
-        let id_size:u32 = 0;
-        reader.read(&mut id_size.to_le_bytes()).unwrap();
-
-        if id_size == 0 {
-            eprintln!("saw {} lines", n);
-            break;
+        if let Err(e) = reader.read_exact(&mut size_buf) {
+            if e.kind() == io::ErrorKind::UnexpectedEof {
+                break;
+            } else {
+                panic!("read error: {}", e);
+            }
         }
+
+        let id_size = u32::from_le_bytes(size_buf);
 
         let id_start = buf.len();
         buf.reserve(id_size as usize);
@@ -80,9 +69,11 @@ fn insert(
             buf.set_len(buf.len() + id_size as usize);
         }
 
-
-        let blob_size:u32 = 0;
-        reader.read(&mut blob_size.to_le_bytes()).unwrap();
+        let blob_size = {
+            let mut blob_size_buf = [0u8; 4];
+            reader.read_exact(&mut blob_size_buf).unwrap();
+            u32::from_le_bytes(blob_size_buf)
+        };
 
         let blob_start = buf.len();
         buf.reserve(blob_size as usize);

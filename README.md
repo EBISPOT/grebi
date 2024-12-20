@@ -1,6 +1,6 @@
 # GrEBI (Graphs@EBI)
 
-HPC pipeline to aggregate knowledge graphs from [EMBL-EBI resources](https://www.ebi.ac.uk/services/data-resources-and-tools), the [MONARCH Initiative KG](https://monarch-initiative.github.io/monarch-ingest/Sources/), [ROBOKOP](https://robokop.renci.org/), [Ubergraph](https://github.com/INCATools/ubergraph), and other sources into giant (multi-terabyte) transient Neo4j+Solr+RocksDB databases for querying.
+HPC pipeline to aggregate knowledge graphs from [EMBL-EBI resources](https://www.ebi.ac.uk/services/data-resources-and-tools), the [MONARCH Initiative KG](https://monarch-initiative.github.io/monarch-ingest/Sources/), [ROBOKOP](https://robokop.renci.org/), [Ubergraph](https://github.com/INCATools/ubergraph), and other sources into giant (multi-terabyte) transient Neo4j+Solr databases for querying.
 
 ## Outputs
 
@@ -88,7 +88,7 @@ The pipeline is implemented as [Rust](https://www.rust-lang.org/) programs with 
 * Cliques of equivalent nodes are merged into single nodes
 * Cliques of equivalent properties are merged into single properties (and for ontology-defined properties, the [qualified safe labels](https://github.com/VirtualFlyBrain/neo4j2owl/blob/master/README.md) are used)
 
-The primary output of the pipeline is a [property graph](https://docs.oracle.com/en/database/oracle/property-graph/22.2/spgdg/what-are-property-graphs.html) for [Neo4j](https://github.com/neo4j/neo4j). The nodes and edges are also loaded into [Solr](https://solr.apache.org/) for full-text search and [RocksDB](https://rocksdb.org/) for id->object resolution.
+The primary output of the pipeline is a [property graph](https://docs.oracle.com/en/database/oracle/property-graph/22.2/spgdg/what-are-property-graphs.html) for [Neo4j](https://github.com/neo4j/neo4j). The nodes and edges are also loaded into [Solr](https://solr.apache.org/) for full-text search and sqlite for id->compressed object resolution.
 
 
 

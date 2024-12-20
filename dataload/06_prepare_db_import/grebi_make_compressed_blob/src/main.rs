@@ -2,29 +2,14 @@
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
 use grebi_shared::get_id;
-use rusqlite::Statement;
-use rusqlite::ToSql;
-use core::slice;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::io::BufWriter;
-use std::io::StdinLock;
 use std::io;
 use std::io::Write;
-use clap::Parser;
-
-use rusqlite::{params, Connection, Transaction};
 
 #[global_allocator]
 static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
-
-fn insert(
-    stmt_batch:&mut Statement,
-    stmt_single:&mut Statement,
-    reader:&mut BufReader<StdinLock<>>,
-    compression_level:u32,
-    batch_size:usize) {
-}
 
 fn main() {
 
@@ -54,7 +39,6 @@ fn main() {
 
         writer.write_all(&(id.len() as u32).to_le_bytes()).unwrap();
         writer.write_all(id).unwrap();
-        writer.write_all(b"\0").unwrap();
 
         let mut enc = ZlibEncoder::new(Vec::new(), Compression::new(9));
 

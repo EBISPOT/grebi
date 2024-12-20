@@ -15,26 +15,29 @@ spec:
         app: {{ .Release.Name }}-summary-service
     spec:
       volumes:
-        - name: {{ .Release.Name }}-summary-service-storage
+        - name: {{ .Release.Name }}-import
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-summary-service-pvc
+            claimName: {{ .Release.Name }}-import-pvc
       containers:
         - name: summary-service
           image: ghcr.io/ebispot/grebi_summary_service:{{.Values.imageTag}}
           imagePullPolicy: Always
           volumeMounts:
-            - mountPath: "/data"
-              name: {{ .Release.Name }}-summary-service-storage
+            - mountPath: "/data_import"
+              name: {{ .Release.Name }}-import
+              readOnly: true
           resources:
             requests:
-              memory: 2Gi
+              memory: 3Gi
               cpu: 0.5
             limits:
-              memory: 2Gi
+              memory: 3Gi
               cpu: 0.5
           env:
             - name: GREBI_SUMMARY_JSON_SEARCH_PATH
-              value: /data
+              value: /data_import/summaries
+            - name: JAVA_TOOL_OPTIONS
+              value: -Xmx2048m
           ports:
             - containerPort: 8081
 
