@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  {{ .Release.Name }}-{{.Values.subgraph1 | replace "_" "-" }}-neo4j
+  labels:
+    app: {{ .Release.Name }}-{{.Values.subgraph1 | replace "_" "-" }}-neo4j
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{.Values.subgraph1 | replace "_" "-" }}-neo4j
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{.Values.subgraph1 | replace "_" "-" }}-neo4j
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - hh-rke-wp-webadmin-58-worker-{{.Values.neo_worker_n}}.caas.ebi.ac.uk
+      securityContext:
+        runAsUser: 5533
+        runAsGroup: 1279
+        fsGroup: 5533
+      volumes:
+        - name: {{ .Release.Name }}-import
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-import-pvc
+        - name: {{ .Release.Name }}-neo4j
+          persistentVolumeClaim:
+            claimName: worker-{{.Values.neo_worker_n}}-local-pvc
+      containers:
+        - name: neo4j
+          image: ghcr.io/ebispot/grebi_neo4j_with_extras:5.18.0
+          volumeMounts:
+            - mountPath: "/data_import"
+              name: {{ .Release.Name }}-import
+              readOnly: true
+            - mountPath: "/data"
+              name: {{ .Release.Name }}-neo4j
+          command: ["/bin/bash", "-c"]
+          args: ["echo Synchronizing data... && rsync --mkpath -arv --delete /data_import/neo4j/{{.Values.subgraph1}}_neo4j/ /data/{{.Values.subgraph1}}_neo4j/ && echo Done && tini -g -- /startup/docker-entrypoint.sh neo4j"]
+          resources:
+            requests:
+              memory: 30Gi
+              cpu: 2
+            limits:
+              memory: 30Gi
+              cpu: 2
+          env:
+            - name: NEO4J_dbms_directories_data
+              value: /data/{{.Values.subgraph1}}_neo4j/data
+            - name: NEO4J_AUTH
+              value: none
+            - name: NEO4J_server_memory_heap_initial__size
+              value: 12000m
+            - name: NEO4J_server_memory_heap_max__size
+              value: 12000m
+            - name: NEO4J_server_memory_pagecache_size
+              value: 12g
+            - name: NEO4J_PLUGINS
+              value: \["apoc"\]
+          ports:
+            - containerPort: 7474
+            - containerPort: 7687
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  {{ .Release.Name }}-{{.Values.subgraph2 | replace "_" "-" }}-neo4j
+  labels:
+    app: {{ .Release.Name }}-{{.Values.subgraph2 | replace "_" "-" }}-neo4j
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{.Values.subgraph2 | replace "_" "-" }}-neo4j
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{.Values.subgraph2 | replace "_" "-" }}-neo4j
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - hh-rke-wp-webadmin-58-worker-{{.Values.neo_worker_n}}.caas.ebi.ac.uk
+      securityContext:
+        runAsUser: 5533
+        runAsGroup: 1279
+        fsGroup: 5533
+      volumes:
+        - name: {{ .Release.Name }}-import
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-import-pvc
+        - name: {{ .Release.Name }}-neo4j
+          persistentVolumeClaim:
+            claimName: worker-{{.Values.neo_worker_n}}-local-pvc
+      containers:
+        - name: neo4j
+          image: ghcr.io/ebispot/grebi_neo4j_with_extras:5.18.0
+          volumeMounts:
+            - mountPath: "/data_import"
+              name: {{ .Release.Name }}-import
+            - mountPath: "/data"
+              name: {{ .Release.Name }}-neo4j
+          command: ["/bin/bash", "-c"]
+          args: ["echo Synchronizing data... && rsync --mkpath -arv --delete /data_import/neo4j/{{.Values.subgraph2}}_neo4j/ $NEO4J_dbms_directories_data/ && echo Done && tini -g -- /startup/docker-entrypoint.sh neo4j"]
+          resources:
+            requests:
+              memory: 8Gi
+              cpu: 2
+            limits:
+              memory: 8Gi
+              cpu: 2
+          env:
+            - name: NEO4J_dbms_directories_data
+              value: /data/{{.Values.subgraph2}}_neo4j
+            - name: NEO4J_AUTH
+              value: none
+            - name: NEO4J_server_memory_heap_initial__size
+              value: 4000m
+            - name: NEO4J_server_memory_heap_max__size
+              value: 4000m
+            - name: NEO4J_server_memory_pagecache_size
+              value: 4g
+            - name: NEO4J_PLUGINS
+              value: \["apoc"\]
+          ports:
+            - containerPort: 7474
+            - containerPort: 7687

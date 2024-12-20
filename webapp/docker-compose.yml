@@ -46,9 +46,9 @@ services:
       ports:
         - 8080:8080
       volumes:
-        - ${GREBI_ROCKSDB_SEARCH_PATH:?Need path to search for RocksDB databases}:/rocksdbs
+        - ${GREBI_SQLITE_SEARCH_PATH:?Need path to search for sqlite databases}:/sqlite
       environment:
-        - GREBI_ROCKSDB_SEARCH_PATH=/rocksdbs
+        - GREBI_SQLITE_SEARCH_PATH=/sqlite
     grebi-summary-service:
       image: ghcr.io/ebispot/grebi_summary_service:dev
       ports:

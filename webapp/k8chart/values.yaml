@@ -1,3 +1,13 @@
 
 imageTag: dev
 
+local_disk: "2Ti"
+
+neo_worker_n: "1"
+rocksdb_worker_n: "2"
+solr_worker_n: "3"
+
+subgraph1: ebi_monarch_xspecies
+subgraph2: impc_x_gwas
+
+

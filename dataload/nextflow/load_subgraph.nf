@@ -5,7 +5,6 @@ import groovy.json.JsonSlurper
 jsonSlurper = new JsonSlurper()
 
 params.tmp = "$GREBI_TMP"
-params.fast_tmp = "$GREBI_FAST_TMP"
 params.home = "$GREBI_DATALOAD_HOME"
 params.config = "$GREBI_CONFIG"
 params.subgraph = "$GREBI_SUBGRAPH"
@@ -33,9 +32,8 @@ workflow {
     materialise(merged.flatten(), indexed.metadata_jsonl, indexed.summary_json, Channel.value(config.exclude_edges + config.identifier_props), Channel.value(config.exclude_self_referential_edges + config.identifier_props), groups_txt)
     merge_summary_jsons(indexed.summary_json.collect() + materialise.out.mat_summary.collect())
 
-    materialised_nodes_and_edges = materialise.out.nodes.collect() + materialise.out.edges.collect()
-
-    rocks_db = create_rocks(materialised_nodes_and_edges)
+    compressed_blobs = create_compressed_blobs(materialise.out.nodes.mix(materialise.out.edges))
+    sqlite = create_sqlite(compressed_blobs.collect())
 
     neo_input_dir = prepare_neo(indexed.summary_json, materialise.out.nodes, materialise.out.edges)
 
@@ -54,18 +52,17 @@ workflow {
 
     solr_tgz = package_solr(solr_nodes_core, solr_edges_core, solr_autocomplete_core)
     neo_tgz = package_neo(neo_db)
-    rocks_tgz = package_rocks(rocks_db)
 
     if(params.is_ebi == "true") {
         copy_summary_to_ftp(merge_summary_jsons.out)
         copy_solr_to_ftp(solr_tgz)
         copy_neo_to_ftp(neo_tgz)
-        copy_rocks_to_ftp(rocks_tgz)
+        copy_sqlite_to_ftp(sqlite)
 
         copy_summary_to_staging(merge_summary_jsons.out)
         copy_solr_config_to_staging()
         copy_solr_cores_to_staging(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core))
-        copy_rocksdb_to_staging(rocks_db)
+        copy_sqlite_to_staging(sqlite)
         copy_neo_to_staging(neo_db)
     }
 }
@@ -287,9 +284,28 @@ process merge_summary_jsons {
     """
 }
 
-process create_rocks {
+process create_compressed_blobs {
     cache "lenient"
-    memory "4 GB" 
+    memory "16 GB"
+    time "1h"
+
+    input:
+    path(mat_jsonl)
+
+    output:
+    path("${params.subgraph}_${task.index}_compressed.blob"), emit: compressed_blob
+
+    script:
+    """
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    cat ${mat_jsonl} | ${params.home}/target/release/grebi_make_compressed_blob > ${params.subgraph}_${task.index}_compressed.blob
+    """
+}
+
+process create_sqlite {
+    cache "lenient"
+    memory "128 GB" 
     time "23h"
     cpus "8"
     errorStrategy 'retry'
@@ -298,19 +314,21 @@ process create_rocks {
     publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
 
     input:
-    val(materialised)
+    val(compressed_blobs)
 
     output:
-    path("${params.subgraph}_rocksdb")
+    path("${params.subgraph}.sqlite3")
 
     script:
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    cat ${materialised.iterator().join(" ")} \
-        | ${params.home}/target/release/grebi_make_rocks \
-            --rocksdb-path ${params.fast_tmp}/rocksdb && \
-    mv ${params.fast_tmp}/rocksdb ${params.subgraph}_rocksdb
+    cat ${compressed_blobs.iterator().join(" ")} \
+        | ${params.home}/target/release/grebi_make_sqlite \
+            --db-path ${params.subgraph}.sqlite3 \
+            --batch-size 450 \
+            --page-size 16384 \
+            --cache-size 1000000
     """
 }
 
@@ -521,26 +539,6 @@ process package_neo {
     """
 }
 
-process package_rocks {
-    cache "lenient"
-    memory "4 GB" 
-    time "8h"
-    cpus "8"
-
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
-
-    input: 
-    path("${params.subgraph}_rocksdb")
-
-    output:
-    path("${params.subgraph}_rocksdb.tgz")
-
-    script:
-    """
-    tar -chf ${params.subgraph}_rocksdb.tgz --use-compress-program="pigz --fast" ${params.subgraph}_rocksdb
-    """
-}
-
 process package_solr {
     cache "lenient"
     memory "4 GB" 
@@ -571,7 +569,7 @@ process package_solr {
 process copy_neo_to_ftp {
     
     cache "lenient"
-    memory "4 GB" 
+    memory "32 GB" 
     time "8h"
     queue "datamover"
 
@@ -590,7 +588,7 @@ process copy_neo_to_ftp {
 process copy_summary_to_ftp {
     
     cache "lenient"
-    memory "4 GB" 
+    memory "32 GB" 
     time "8h"
     queue "datamover"
 
@@ -609,7 +607,7 @@ process copy_summary_to_ftp {
 process copy_solr_to_ftp {
     
     cache "lenient"
-    memory "4 GB" 
+    memory "32 GB" 
     time "8h"
     queue "datamover"
 
@@ -625,29 +623,29 @@ process copy_solr_to_ftp {
     """
 }
 
-process copy_rocks_to_ftp {
+process copy_sqlite_to_ftp {
     
     cache "lenient"
-    memory "4 GB" 
+    memory "32 GB" 
     time "8h"
     queue "datamover"
 
     input: 
-    path("rocksdb.tgz")
+    path("${params.subgraph}.sqlite3")
 
     script:
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
     mkdir -p /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}
-    cp -f rocksdb.tgz /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}/${params.subgraph}_rocksdb.tgz
+    cp -f ${params.subgraph}.sqlite3 /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}/${params.subgraph}.sqlite3
     """
 }
 
 process copy_summary_to_staging {
     
     cache "lenient"
-    memory "4 GB" 
+    memory "32 GB" 
     time "8h"
     queue "datamover"
 
@@ -665,7 +663,7 @@ process copy_summary_to_staging {
 
 process copy_solr_config_to_staging {
     cache "lenient"
-    memory "4 GB" 
+    memory "32 GB" 
     time "8h"
     queue "datamover"
 
@@ -683,7 +681,7 @@ process copy_solr_config_to_staging {
 
 process copy_solr_cores_to_staging {
     cache "lenient"
-    memory "4 GB" 
+    memory "32 GB" 
     time "8h"
     queue "datamover"
 
@@ -699,27 +697,27 @@ process copy_solr_cores_to_staging {
     """
 }
 
-process copy_rocksdb_to_staging {
+process copy_sqlite_to_staging {
     cache "lenient"
-    memory "4 GB" 
+    memory "32 GB" 
     time "8h"
     queue "datamover"
 
     input: 
-    path(rocksdb)
+    path(sqlite)
 
     script:
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    mkdir -p /nfs/public/rw/ontoapps/grebi/staging/rocksdb
-    cp -LR * /nfs/public/rw/ontoapps/grebi/staging/rocksdb/
+    mkdir -p /nfs/public/rw/ontoapps/grebi/staging/sqlite
+    cp -LR * /nfs/public/rw/ontoapps/grebi/staging/sqlite/
     """
 }
 
 process copy_neo_to_staging {
     cache "lenient"
-    memory "4 GB" 
+    memory "32 GB" 
     time "8h"
     queue "datamover"
 

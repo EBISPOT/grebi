@@ -3,45 +3,57 @@ package uk.ac.ebi.grebi_resolver_service;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import io.javalin.Javalin;
-import io.javalin.http.Context;
-import org.rocksdb.Options;
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksDBException;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteOpenMode;
 
 import java.io.InputStreamReader;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.*;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
 
 public class GrebiResolverSvc {
-    private static Map<String,RocksDB> rocksDBs = new HashMap<>();
+
+    public static class Db {
+        public Connection connection;
+    }
+
+    private static Map<String, Db> sqliteDBs = new HashMap<>();
 
     public static void main(String[] args) {
 
         Gson gson = new Gson();
 
-        RocksDB.loadLibrary();
+        var dbfiles = Arrays.stream(new File(System.getenv("GREBI_SQLITE_SEARCH_PATH")).listFiles())
+                .filter(File::isFile)
+                .filter(f -> f.getName().endsWith(".sqlite") || f.getName().endsWith(".sqlite3"))
+                .collect(Collectors.toList());
 
-        Options options = new Options();
-        options.setCreateIfMissing(false);
+        System.out.println("Found sqlite files: " + dbfiles);
 
-        var dirs = Arrays.stream(new File(System.getenv("GREBI_ROCKSDB_SEARCH_PATH")).listFiles()).filter(File::isDirectory).filter(f -> f.getName().endsWith("_rocksdb")).toArray(File[]::new);
+        for (var dbfile : dbfiles) {
+            Db db = new Db();
 
-        for (File dir : dirs) {
-            RocksDB rocksDB = null;
+            var subgraph = dbfile.getName().split("\\.")[0];
+
+            System.out.println("Loading SQLite DB for subgraph " + subgraph + " from " + dbfile.getAbsolutePath());
+
             try {
-                rocksDB = RocksDB.openReadOnly(options, dir.getAbsolutePath());
-            } catch (RocksDBException e) {
+                SQLiteConfig config = new SQLiteConfig();
+                config.setReadOnly(true);
+                config.setOpenMode(SQLiteOpenMode.READONLY);
+                db.connection = DriverManager.getConnection("jdbc:sqlite:" + dbfile.getAbsolutePath(), config.toProperties());
+            } catch (SQLException e) {
                 e.printStackTrace();
                 return;
             }
-            var subgraph = dir.getName().split("_rocksdb")[0];
-            rocksDBs.put(subgraph, rocksDB);
-            System.out.println("Loaded RocksDB for subgraph " + subgraph + " from " + dir.getAbsolutePath());
+
+            sqliteDBs.put(subgraph, db);
+            System.out.println("Loaded SQLite DB for subgraph " + subgraph + " from " + dbfile.getAbsolutePath());
         }
 
         Javalin app = Javalin.create(config -> {
@@ -49,51 +61,56 @@ public class GrebiResolverSvc {
 
         app.get("/subgraphs", ctx -> {
             ctx.contentType("application/json");
-            ctx.result(gson.toJson(rocksDBs.keySet()));
+            ctx.result(gson.toJson(sqliteDBs.keySet()));
         });
 
         app.post("/{subgraph}/resolve", ctx -> {
 
             var subgraph = ctx.pathParam("subgraph");
-            var rocksdb = rocksDBs.get(subgraph);
-            if(rocksdb == null) {
+            var sqliteDb = sqliteDBs.get(subgraph);
+            if (sqliteDb == null) {
                 ctx.status(404).result("Subgraph not found");
                 return;
             }
 
             List<String> paramArray = gson.fromJson(new InputStreamReader(ctx.bodyInputStream()), List.class);
-            List<byte[]> keys = new ArrayList<>();
-            for (String id : paramArray) {
-                keys.add(id.getBytes());
-            }
-
             Map<String, JsonElement> results = new HashMap<>();
-            try {
-                List<byte[]> values = rocksdb.multiGetAsList(keys);
-                int n = 0;
-                for (byte[] value : values) {
-                    byte[] key = keys.get(n++);
-                    if (value != null) {
-                        JsonElement jsonElement = JsonParser.parseString(new String(value));
-                        results.put(new String(key), jsonElement);
-                    } else {
-                        results.put(new String(key), null);
+
+            try (PreparedStatement stmt = sqliteDb.connection.prepareStatement(
+                    "SELECT json FROM id_to_json WHERE id = ?")) {
+
+                for (String id : paramArray) {
+                    stmt.setBytes(1, id.getBytes());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            var is = new InflaterInputStream(rs.getBinaryStream("json"));
+                            JsonElement jsonElement = JsonParser.parseReader(new JsonReader(new InputStreamReader(is)));
+                            results.put(id, jsonElement);
+                        } else {
+                            results.put(id, null);
+                        }
                     }
                 }
+
                 ctx.contentType("application/json");
                 ctx.result(gson.toJson(results));
-            } catch (RocksDBException e) {
+
+            } catch (SQLException e) {
                 ctx.status(500).result(e.getMessage());
             }
 
         });
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            for (RocksDB rocksDB : rocksDBs.values()) {
-                rocksDB.close();
+            for (Db db : sqliteDBs.values()) {
+                try {
+                    if (db.connection != null && !db.connection.isClosed()) {
+                        db.connection.close();
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }));
     }
-
 }
-

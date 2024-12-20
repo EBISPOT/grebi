@@ -28,6 +28,8 @@ spec:
           ports:
             - containerPort: 8080
           env:
+            - name: REACT_APP_ENV
+              value: ebi
             - name: REACT_APP_APIURL
               value: https://wwwdev.ebi.ac.uk/kg/
             - name: PUBLIC_URL
@@ -36,5 +38,3 @@ spec:
               value: 'true'
           command: ["/bin/bash", "-c"]
           args: ["/opt/grebi_ui/entrypoint.dockersh"]
-
-

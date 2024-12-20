@@ -24,7 +24,8 @@ members = [
 	"06_prepare_db_import/grebi_make_neo_csv",
 	"06_prepare_db_import/grebi_make_neo_ids_csv",
 	"06_prepare_db_import/grebi_make_solr",
-	"07_create_db/rocksdb/grebi_make_rocks",
+	"06_prepare_db_import/grebi_make_compressed_blob",
+	"07_create_db/sqlite/grebi_make_sqlite",
 	"grebi_shared"
 ]
 

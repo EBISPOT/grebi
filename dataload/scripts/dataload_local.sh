@@ -1,7 +1,6 @@
 #!/bin/bash
 export GREBI_DATALOAD_HOME=~/grebi/dataload
 export GREBI_TMP=$(pwd)
-export GREBI_FAST_TMP=/tmp
 export GREBI_CONFIG=ebi
 export GREBI_IS_EBI=false
 export GREBI_TIMESTAMP=$(date +%Y_%m_%d__%H_%M)
