@@ -1,5 +1,6 @@
 #!/bin/bash
 export GREBI_DATALOAD_HOME=~/grebi/dataload
+export GREBI_QUERY_YAMLS_PATH=~/grebi/materialised_queries
 export GREBI_TMP=$(pwd)
 export GREBI_CONFIG=ebi
 export GREBI_IS_EBI=false

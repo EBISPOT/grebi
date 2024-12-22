@@ -1,5 +1,6 @@
 #!/bin/bash
 export GREBI_DATALOAD_HOME=/nfs/production/parkinso/spot/grebi/dataload
+export GREBI_QUERY_YAMLS_PATH=/nfs/production/parkinso/spot/grebi/materialised_queries
 export GREBI_TMP=/hps/nobackup/parkinso/spot/grebi/tmp
 export GREBI_CONFIG=ebi
 export GREBI_IS_EBI=true
