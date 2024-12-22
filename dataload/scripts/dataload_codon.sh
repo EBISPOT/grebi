@@ -7,7 +7,7 @@ export GREBI_TIMESTAMP=$(date +%Y_%m_%d__%H_%M)
 export GREBI_MAX_ENTITIES=1000000000
 export GREBI_NEXTFLOW_CONFIG=$GREBI_DATALOAD_HOME/nextflow/codon_nextflow.config
 module load nextflow-22.10.1-gcc-11.2.0-ju5saqw
-module load python
+module load python-3.10.2-gcc-9.3.0-gswnsij
 source /nfs/production/parkinso/spot/grebi/.venv/bin/activate
 cd /hps/nobackup/parkinso/spot/grebi/
 export PYTHONUNBUFFERED=true

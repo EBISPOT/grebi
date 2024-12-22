@@ -1,10 +1,10 @@
-
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
 use grebi_shared::get_id;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::io::BufWriter;
+use std::io::StdinLock;
 use std::io;
 use std::io::Write;
 
@@ -50,3 +50,4 @@ fn main() {
     }
 
 }
+

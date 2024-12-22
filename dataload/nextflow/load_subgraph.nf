@@ -42,8 +42,10 @@ workflow {
         prepare_neo.out.nodes.collect() +
         prepare_neo.out.edges.collect() +
         prepare_neo.out.id_edges.collect() +
-	ids_csv.collect()
-)
+        ids_csv.collect()
+    )
+
+    mat_queries_sqlites = run_materialised_queries(neo_db)
 
     solr_inputs = prepare_solr(materialise.out.nodes, materialise.out.edges)
     solr_nodes_core = create_solr_nodes_core(prepare_solr.out.nodes.collect(), indexed.names_txt)
@@ -432,6 +434,33 @@ process create_neo {
         --out-db-path ${params.subgraph}_neo4j
     """
 }
+
+process run_materialised_queries {
+    cache "lenient"
+    memory "8 GB" 
+    time "8h"
+    cpus "8"
+    neo_tmp_path "/dev/shm"
+
+    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
+
+    input:
+    path(neo_db)
+
+    output:
+    path("materialised_queries")
+
+    script:
+    """
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    cp -r ${neo_db}/* ${task.neo_tmp_path}
+    PYTHONUNBUFFERED=true python3 ${params.home}/08_run_queries/run_queries.py \
+        --in-db-path ${task.neo_tmp_path} \
+        --out-sqlites-path materialised_queries
+    """
+}
+
 
 process create_solr_nodes_core {
     cache "lenient"
