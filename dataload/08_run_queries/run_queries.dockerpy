@@ -6,6 +6,8 @@ from pandas import DataFrame
 import json
 from timeit import default_timer as timer
 
+os.system('echo "dbms.security.auth_enabled=false" >> /var/lib/neo4j/conf/neo4j.conf')
+
 os.system("neo4j start")
 os.system("sleep 20")
 

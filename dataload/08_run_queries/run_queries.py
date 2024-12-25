@@ -35,13 +35,13 @@ def main():
             '--bind ' + shlex.quote(neo_data_path) + ':/data',
             '--bind ' + shlex.quote(neo_logs_path) + ':/logs',
             '--bind ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '08_run_queries/run_queries.dockerpy')) + ':/run_queries.py',
-            '--bind ' + os.path.abspath(os.environ['QUERY_YAMLS_PATH']) + ':/materialised_queries',
+            '--bind ' + os.path.abspath(os.environ['GREBI_QUERY_YAMLS_PATH']) + ':/materialised_queries',
             '--bind ' + os.path.abspath(args.out_sqlites_path) + ':/out',
             '--writable-tmpfs',
             '--network=none',
             '--env NEO4J_AUTH=none',
             'docker://ghcr.io/ebispot/grebi_neo4j_with_extras:5.18.0',
-            'python3 /run_queries.dockerpy'
+            'python3 /run_queries.py'
         ])
     else:
         cmd = ' '.join([
@@ -50,7 +50,7 @@ def main():
             '-v ' + shlex.quote(neo_data_path) + ':/data',
             '-v ' + shlex.quote(neo_logs_path) + ':/logs',
             '-v ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '08_run_queries/run_queries.dockerpy')) + ':/run_queries.py',
-            '-v ' + os.path.abspath(os.environ['QUERY_YAMLS_PATH']) + ':/materialised_queries',
+            '-v ' + os.path.abspath(os.environ['GREBI_QUERY_YAMLS_PATH']) + ':/materialised_queries',
             '-v ' + os.path.abspath(args.out_sqlites_path) + ':/out',
             '-e NEO4J_AUTH=none',
             'ghcr.io/ebispot/grebi_neo4j_with_extras:5.18.0',

@@ -11,6 +11,7 @@ params.subgraph = "$GREBI_SUBGRAPH"
 params.timestamp = "$GREBI_TIMESTAMP"
 params.is_ebi = "$GREBI_IS_EBI"
 params.solr_mem = "140g"
+params.neo_tmp_path = "/dev/shm"
 
 workflow {
 
@@ -29,13 +30,13 @@ workflow {
 
     indexed = index(merged.collect())
 
-    materialise(merged.flatten(), indexed.metadata_jsonl, indexed.summary_json, Channel.value(config.exclude_edges + config.identifier_props), Channel.value(config.exclude_self_referential_edges + config.identifier_props), groups_txt)
-    merge_summary_jsons(indexed.summary_json.collect() + materialise.out.mat_summary.collect())
+    link(merged.flatten(), indexed.metadata_jsonl, indexed.summary_json, Channel.value(config.exclude_edges + config.identifier_props), Channel.value(config.exclude_self_referential_edges + config.identifier_props), groups_txt)
+    merge_summary_jsons(indexed.summary_json.collect() + link.out.mat_summary.collect())
 
-    compressed_blobs = create_compressed_blobs(materialise.out.nodes.mix(materialise.out.edges))
+    compressed_blobs = create_compressed_blobs(link.out.nodes.mix(link.out.edges))
     sqlite = create_sqlite(compressed_blobs.collect())
 
-    neo_input_dir = prepare_neo(indexed.summary_json, materialise.out.nodes, materialise.out.edges)
+    neo_input_dir = prepare_neo(indexed.summary_json, link.out.nodes, link.out.edges)
 
     ids_csv = create_neo_ids_csv(indexed.ids_txt)
     neo_db = create_neo(
@@ -47,7 +48,7 @@ workflow {
 
     mat_queries_sqlites = run_materialised_queries(neo_db)
 
-    solr_inputs = prepare_solr(materialise.out.nodes, materialise.out.edges)
+    solr_inputs = prepare_solr(link.out.nodes, link.out.edges)
     solr_nodes_core = create_solr_nodes_core(prepare_solr.out.nodes.collect(), indexed.names_txt)
     solr_edges_core = create_solr_edges_core(prepare_solr.out.edges.collect(), indexed.names_txt)
     solr_autocomplete_core = create_solr_autocomplete_core(indexed.names_txt)
@@ -227,7 +228,7 @@ process index {
     """
 }
 
-process materialise {
+process link {
     cache "lenient"
     memory "4 GB"
     time "8h"
@@ -244,8 +245,8 @@ process materialise {
     path(groups_txt)
 
     output:
-    path("materialised_nodes_${task.index}.jsonl"), emit: nodes
-    path("materialised_edges_${task.index}.jsonl"), emit: edges
+    path("linked_nodes_${task.index}.jsonl"), emit: nodes
+    path("linked_edges_${task.index}.jsonl"), emit: edges
     path("mat_summary_${task.index}.json"), emit: mat_summary
 
     script:
@@ -257,11 +258,11 @@ process materialise {
           --in-metadata-jsonl ${metadata_jsonl} \
           --in-summary-json ${index_summary_json} \
           --groups-txt ${groups_txt} \
-          --out-edges-jsonl materialised_edges_${task.index}.jsonl \
+          --out-edges-jsonl linked_edges_${task.index}.jsonl \
           --out-summary-json mat_summary_${task.index}.json \
           --exclude ${exclude.iterator().join(",")} \
           --exclude-self-referential ${exclude_self_referential.iterator().join(",")} \
-        > materialised_nodes_${task.index}.jsonl
+        > linked_nodes_${task.index}.jsonl
     """
 }
 
@@ -440,7 +441,6 @@ process run_materialised_queries {
     memory "8 GB" 
     time "8h"
     cpus "8"
-    neo_tmp_path "/dev/shm"
 
     publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
 
@@ -454,9 +454,9 @@ process run_materialised_queries {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    cp -r ${neo_db}/* ${task.neo_tmp_path}
+    cp -r ${neo_db}/* ${params.neo_tmp_path}
     PYTHONUNBUFFERED=true python3 ${params.home}/08_run_queries/run_queries.py \
-        --in-db-path ${task.neo_tmp_path} \
+        --in-db-path ${params.neo_tmp_path} \
         --out-sqlites-path materialised_queries
     """
 }
