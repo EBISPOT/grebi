@@ -706,7 +706,8 @@ process copy_mat_queries_to_ftp {
     queue "datamover"
 
     input: 
-    path(csvs, sqlite)
+    path(csvs)
+    path(sqlite)
 
     script:
     """
