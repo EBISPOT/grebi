@@ -12,7 +12,7 @@ def main():
 
     conn = sqlite3.connect(args.out_sqlite_path)
 
-    for csv in glob.glob("*.csv"):
+    for csv in glob.glob("*.csv.gz"):
         df = pd.read_csv(csv)
         df.to_sql(csv.replace(".csv", ""), conn)
 
