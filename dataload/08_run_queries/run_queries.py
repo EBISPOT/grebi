@@ -23,9 +23,9 @@ def main():
     neo_data_path = os.path.abspath(os.path.join(neo_path, "data"))
     neo_logs_path = os.path.abspath(os.path.join(neo_path, "logs"))
 
-    sqlites_path = args.out_sqlites_path
+    csvs_path = args.out_csvs_path
 
-    os.makedirs(sqlites_path)
+    os.makedirs(csvs_path)
 
     if has_singularity:
         cmd = ' '.join([
@@ -36,7 +36,7 @@ def main():
             '--bind ' + shlex.quote(neo_logs_path) + ':/logs',
             '--bind ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '08_run_queries/run_queries.dockerpy')) + ':/run_queries.py',
             '--bind ' + os.path.abspath(os.environ['GREBI_QUERY_YAMLS_PATH']) + ':/materialised_queries',
-            '--bind ' + os.path.abspath(args.out_sqlites_path) + ':/out',
+            '--bind ' + os.path.abspath(args.out_csvs_path) + ':/out',
             '--writable-tmpfs',
             '--network=none',
             '--env NEO4J_AUTH=none',
@@ -51,7 +51,7 @@ def main():
             '-v ' + shlex.quote(neo_logs_path) + ':/logs',
             '-v ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '08_run_queries/run_queries.dockerpy')) + ':/run_queries.py',
             '-v ' + os.path.abspath(os.environ['GREBI_QUERY_YAMLS_PATH']) + ':/materialised_queries',
-            '-v ' + os.path.abspath(args.out_sqlites_path) + ':/out',
+            '-v ' + os.path.abspath(args.out_csvs_path) + ':/out',
             '-e NEO4J_AUTH=none',
             'ghcr.io/ebispot/grebi_neo4j_with_extras:5.18.0',
             'python3 /run_queries.py'
