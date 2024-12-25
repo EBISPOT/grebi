@@ -10,9 +10,9 @@ from subprocess import Popen, PIPE, STDOUT
 
 def main():
 
-    parser = argparse.ArgumentParser(description='Create Neo4j DB')
+    parser = argparse.ArgumentParser(description='Materialise Cypher queries as CSV')
     parser.add_argument('--in-db-path', type=str, help='Path with the neo4j database to query', required=True)
-    parser.add_argument('--out-sqlites-path', type=str, help='Path for the output sqlite files of materialised results', required=True)
+    parser.add_argument('--out-csvs-path', type=str, help='Path for the output csv files of materialised results', required=True)
     args = parser.parse_args()
 
     has_singularity = os.system('which singularity') == 0
