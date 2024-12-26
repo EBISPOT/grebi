@@ -451,7 +451,7 @@ process run_materialised_queries {
     path(neo_db)
 
     output:
-    path("materialised_queries")
+    path("materialised_queries/*")
 
     script:
     """
@@ -636,8 +636,8 @@ process copy_neo_to_ftp {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}
-    cp -f neo4j.tgz /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}/${params.subgraph}_neo4j.tgz
+    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}
+    cp -f neo4j.tgz /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/${params.subgraph}_neo4j.tgz
     """
 }
 
@@ -655,8 +655,8 @@ process copy_summary_to_ftp {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}
-    cp -f ${summary_json} /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}/
+    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}
+    cp -f ${summary_json} /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/
     """
 }
 
@@ -674,8 +674,8 @@ process copy_solr_to_ftp {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}
-    cp -f solr.tgz /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}/${params.subgraph}_solr.tgz
+    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}
+    cp -f solr.tgz /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/${params.subgraph}_solr.tgz
     """
 }
 
@@ -693,8 +693,8 @@ process copy_sqlite_to_ftp {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}
-    cp -f ${params.subgraph}.sqlite3 /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}/${params.subgraph}.sqlite3
+    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}
+    cp -f ${params.subgraph}.sqlite3 /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/${params.subgraph}.sqlite3
     """
 }
 
@@ -713,8 +713,9 @@ process copy_mat_queries_to_ftp {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}
-    cp -f ${csvs} ${sqlite} /nfs/ftp/public/databases/spot/kg/${params.config}/${params.timestamp.trim()}/
+    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/query_results
+    cp -f ${csvs} /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/query_results/
+    cp -f ${sqlite} /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/query_results/all_query_results.sqlite3.gz
     """
 }
 

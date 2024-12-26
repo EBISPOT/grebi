@@ -4,7 +4,7 @@ export GREBI_QUERY_YAMLS_PATH=/nfs/production/parkinso/spot/grebi/materialised_q
 export GREBI_TMP=/hps/nobackup/parkinso/spot/grebi/tmp
 export GREBI_CONFIG=ebi
 export GREBI_IS_EBI=true
-export GREBI_TIMESTAMP=$(date +%Y_%m_%d__%H_%M)
+export GREBI_TIMESTAMP=$(date +"%Y-%b-%d")
 export GREBI_MAX_ENTITIES=1000000000
 export GREBI_NEXTFLOW_CONFIG=$GREBI_DATALOAD_HOME/nextflow/codon_nextflow.config
 module load nextflow-22.10.1-gcc-11.2.0-ju5saqw
