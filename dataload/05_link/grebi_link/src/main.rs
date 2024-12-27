@@ -235,7 +235,7 @@ fn main() -> std::io::Result<()> {
 
     edges_writer.flush().unwrap();
 
-    eprintln!("materialise took {} seconds", start_time.elapsed().as_secs());
+    eprintln!("link took {} seconds", start_time.elapsed().as_secs());
 
     let mut entity_prop_defs:Map<String,Value> = Map::new();
 
