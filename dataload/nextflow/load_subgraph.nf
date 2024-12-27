@@ -31,7 +31,7 @@ workflow {
     indexed = index(merged.collect())
 
     link(merged.flatten(), indexed.metadata_jsonl, indexed.summary_json, Channel.value(config.exclude_edges + config.identifier_props), Channel.value(config.exclude_self_referential_edges + config.identifier_props), groups_txt)
-    merge_summary_jsons(indexed.summary_json.collect() + link.out.mat_summary.collect())
+    merge_summary_jsons(indexed.summary_json.collect() + link.out.linked_summary.collect())
 
     compressed_blobs = create_compressed_blobs(link.out.nodes.mix(link.out.edges))
     sqlite = create_sqlite(compressed_blobs.collect())
@@ -250,19 +250,19 @@ process link {
     output:
     path("linked_nodes_${task.index}.jsonl"), emit: nodes
     path("linked_edges_${task.index}.jsonl"), emit: edges
-    path("mat_summary_${task.index}.json"), emit: mat_summary
+    path("linked_summary_${task.index}.json"), emit: linked_summary
 
     script:
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
     cat ${merged_filename} \
-        | ${params.home}/target/release/grebi_materialise \
+        | ${params.home}/target/release/grebi_link \
           --in-metadata-jsonl ${metadata_jsonl} \
           --in-summary-json ${index_summary_json} \
           --groups-txt ${groups_txt} \
           --out-edges-jsonl linked_edges_${task.index}.jsonl \
-          --out-summary-json mat_summary_${task.index}.json \
+          --out-summary-json linked_summary_${task.index}.json \
           --exclude ${exclude.iterator().join(",")} \
           --exclude-self-referential ${exclude_self_referential.iterator().join(",")} \
         > linked_nodes_${task.index}.jsonl
