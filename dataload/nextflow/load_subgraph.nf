@@ -48,15 +48,18 @@ workflow {
 
     run_materialised_queries(neo_db)
 
+    csv_results = results_to_csv(run_materialised_queries.out.results)
+    linked_results = link_results(run_materialised_queries.out.results)
+
     solr_inputs = prepare_solr(link.out.nodes, link.out.edges)
     solr_nodes_core = create_solr_nodes_core(prepare_solr.out.nodes.collect(), indexed.names_txt)
     solr_edges_core = create_solr_edges_core(prepare_solr.out.edges.collect(), indexed.names_txt)
     solr_autocomplete_core = create_solr_autocomplete_core(indexed.names_txt)
 
     solr_queries_core = create_solr_queries_core(run_materialised_queries.out.metadata)
-    solr_mat_cores = create_solr_mat_cores(run_materialised_queries.out.results)
+    solr_mat_cores = create_solr_mat_cores(linked_results)
 
-    solr_tgz = package_solr(solr_nodes_core, solr_edges_core, solr_autocomplete_core)
+    solr_tgz = package_solr(solr_nodes_core, solr_edges_core, solr_autocomplete_core, solr_mat_cores, solr_queries_core)
     neo_tgz = package_neo(neo_db)
 
     if(params.is_ebi == "true") {
@@ -64,14 +67,13 @@ workflow {
         copy_solr_to_ftp(solr_tgz)
         copy_neo_to_ftp(neo_tgz)
         copy_sqlite_to_ftp(sqlite)
-        copy_mat_queries_to_ftp(run_materialised_queries.out.csvs.collect() + run_materialised_queries.out.jsons.collect())
+        copy_mat_queries_to_ftp(csv_results.concat(run_materialised_queries.out.metadatas).collect())
 
         copy_summary_to_staging(merge_summary_jsons.out)
         copy_solr_config_to_staging()
-        copy_solr_cores_to_staging(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core))
+        copy_solr_cores_to_staging(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core).concat(solr_queries_core).concat(solr_mat_cores))
         copy_sqlite_to_staging(sqlite)
         copy_neo_to_staging(neo_db)
-        copy_mat_queries_to_staging(mat_queries_sqlite)
     }
 }
 
@@ -455,6 +457,7 @@ process run_materialised_queries {
     output:
     path("materialised_queries/queries.jsonl"), emit: metadata
     path("materialised_queries/*.results.jsonl"), emit: results
+    path("materialised_queries/*.json"), emit: metadatas
 
     script:
     """
@@ -464,6 +467,30 @@ process run_materialised_queries {
     PYTHONUNBUFFERED=true python3 ${params.home}/07_run_queries/run_queries.py \
         --in-db-path ${params.neo_tmp_path} \
         --out-jsons-path materialised_queries
+    """
+}
+
+process link_results {
+    cache "lenient"
+    memory "8 GB" 
+    time "8h"
+    cpus "8"
+
+    input:
+    path(results_jsonl)
+
+    output:
+    path("${results_jsonl.baseName}.linked_results.jsonl")
+
+    script:
+    """
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    cat ${results_jsonl} | \
+    ${params.home}/target/release/grebi_link_results \
+          --in-metadata-jsonl ${metadata_jsonl} \
+          --groups-txt ${groups_txt} \
+          > ${results_jsonl.baseName}.linked_results.jsonl
     """
 }
 

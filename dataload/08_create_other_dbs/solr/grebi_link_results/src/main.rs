@@ -21,9 +21,6 @@ use grebi_shared::load_groups_txt::load_id_to_group_mapping;
 struct Args {
 
     #[arg(long)]
-    identifier_properties:String,
-
-    #[arg(long)]
     in_metadata_jsonl: String,
 
     #[arg(long)]

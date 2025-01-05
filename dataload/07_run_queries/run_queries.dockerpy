@@ -41,6 +41,9 @@ for file in os.listdir("/materialised_queries"):
 
     metadatas.append(query)
 
+    with open(f"/out/{query_id}.json", "w") as f:
+        json.dump(query, f, skipkeys=True)
+
 with open(f"/out/queries.jsonl", "w") as f:
     for metadata in metadatas:
         json.dump(metadata, f, skipkeys=True)
