@@ -1,6 +1,6 @@
 title: Human GWAS variants to mouse models in IMPC
 description: Connects human GWAS variants to mouse models in IMPC using multiple different graph paths through phenotype and disease ontologies
-subgraphs:
+run_for_subgraphs:
   - ebi_monarch_xspecies
   - impc_x_gwas
 uses_datasources:
