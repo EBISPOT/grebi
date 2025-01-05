@@ -12,7 +12,7 @@ def main():
 
     parser = argparse.ArgumentParser(description='Materialise Cypher queries as CSV')
     parser.add_argument('--in-db-path', type=str, help='Path with the neo4j database to query', required=True)
-    parser.add_argument('--out-csvs-path', type=str, help='Path for the output csv files of materialised results', required=True)
+    parser.add_argument('--out-jsons-path', type=str, help='Path for the output json files of materialised results', required=True)
     args = parser.parse_args()
 
     has_singularity = os.system('which singularity') == 0
@@ -23,9 +23,9 @@ def main():
     neo_data_path = os.path.abspath(os.path.join(neo_path, "data"))
     neo_logs_path = os.path.abspath(os.path.join(neo_path, "logs"))
 
-    csvs_path = args.out_csvs_path
+    jsons_path = args.out_jsons_path
 
-    os.makedirs(csvs_path)
+    os.makedirs(jsons_path)
 
     if has_singularity:
         cmd = ' '.join([
@@ -34,9 +34,9 @@ def main():
             '--bind ' + os.path.abspath(".") + ':/mnt',
             '--bind ' + shlex.quote(neo_data_path) + ':/data',
             '--bind ' + shlex.quote(neo_logs_path) + ':/logs',
-            '--bind ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '08_run_queries/run_queries.dockerpy')) + ':/run_queries.py',
+            '--bind ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '07_run_queries/run_queries.dockerpy')) + ':/run_queries.py',
             '--bind ' + os.path.abspath(os.environ['GREBI_QUERY_YAMLS_PATH']) + ':/materialised_queries',
-            '--bind ' + os.path.abspath(args.out_csvs_path) + ':/out',
+            '--bind ' + os.path.abspath(args.out_jsons_path) + ':/out',
             '--writable-tmpfs',
             '--network=none',
             '--env NEO4J_AUTH=none',
@@ -49,9 +49,9 @@ def main():
             '--user="$(id -u):$(id -g)"'
             '-v ' + shlex.quote(neo_data_path) + ':/data',
             '-v ' + shlex.quote(neo_logs_path) + ':/logs',
-            '-v ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '08_run_queries/run_queries.dockerpy')) + ':/run_queries.py',
+            '-v ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '07_run_queries/run_queries.dockerpy')) + ':/run_queries.py',
             '-v ' + os.path.abspath(os.environ['GREBI_QUERY_YAMLS_PATH']) + ':/materialised_queries',
-            '-v ' + os.path.abspath(args.out_csvs_path) + ':/out',
+            '-v ' + os.path.abspath(args.out_jsons_path) + ':/out',
             '-e NEO4J_AUTH=none',
             'ghcr.io/ebispot/grebi_neo4j_with_extras:5.18.0',
             'python3 /run_queries.py'

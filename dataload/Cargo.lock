@@ -482,6 +482,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "grebi_link"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "flate2",
+ "grebi_shared",
+ "hex",
+ "jemallocator",
+ "serde_json",
+ "sha1",
+]
+
+[[package]]
+name = "grebi_link_results"
+version = "0.1.0"
+dependencies = [
+ "bloomfilter",
+ "clap",
+ "csv",
+ "grebi_shared",
+ "jemallocator",
+ "lmdb-zero",
+ "serde_json",
+]
+
+[[package]]
 name = "grebi_make_compressed_blob"
 version = "0.1.0"
 dependencies = [
@@ -530,19 +556,6 @@ dependencies = [
  "jemallocator",
  "rusqlite",
  "serde_json",
-]
-
-[[package]]
-name = "grebi_materialise"
-version = "0.1.0"
-dependencies = [
- "clap",
- "flate2",
- "grebi_shared",
- "hex",
- "jemallocator",
- "serde_json",
- "sha1",
 ]
 
 [[package]]

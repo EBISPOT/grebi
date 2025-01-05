@@ -46,13 +46,15 @@ workflow {
         ids_csv.collect()
     )
 
-    mat_queries_csvs = run_materialised_queries(neo_db)
-    mat_queries_sqlite = csvs_to_sqlite(mat_queries_csvs.collect())
+    run_materialised_queries(neo_db)
 
     solr_inputs = prepare_solr(link.out.nodes, link.out.edges)
     solr_nodes_core = create_solr_nodes_core(prepare_solr.out.nodes.collect(), indexed.names_txt)
     solr_edges_core = create_solr_edges_core(prepare_solr.out.edges.collect(), indexed.names_txt)
     solr_autocomplete_core = create_solr_autocomplete_core(indexed.names_txt)
+
+    solr_queries_core = create_solr_queries_core(run_materialised_queries.out.metadata)
+    solr_mat_cores = create_solr_mat_cores(run_materialised_queries.out.results)
 
     solr_tgz = package_solr(solr_nodes_core, solr_edges_core, solr_autocomplete_core)
     neo_tgz = package_neo(neo_db)
@@ -62,7 +64,7 @@ workflow {
         copy_solr_to_ftp(solr_tgz)
         copy_neo_to_ftp(neo_tgz)
         copy_sqlite_to_ftp(sqlite)
-        copy_mat_queries_to_ftp(mat_queries_csvs, mat_queries_sqlite)
+        copy_mat_queries_to_ftp(run_materialised_queries.out.csvs.collect() + run_materialised_queries.out.jsons.collect())
 
         copy_summary_to_staging(merge_summary_jsons.out)
         copy_solr_config_to_staging()
@@ -433,7 +435,7 @@ process create_neo {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    PYTHONUNBUFFERED=true python3 ${params.home}/07_create_db/neo4j/neo4j_import.slurm.py \
+    PYTHONUNBUFFERED=true python3 ${params.home}/06_create_neo_db/neo4j_import.slurm.py \
         --in-csv-path . \
         --out-db-path ${params.subgraph}_neo4j
     """
@@ -451,16 +453,17 @@ process run_materialised_queries {
     path(neo_db)
 
     output:
-    path("materialised_queries/*")
+    path("materialised_queries/queries.jsonl"), emit: metadata
+    path("materialised_queries/*.results.jsonl"), emit: results
 
     script:
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
     cp -r ${neo_db}/* ${params.neo_tmp_path}
-    PYTHONUNBUFFERED=true python3 ${params.home}/08_run_queries/run_queries.py \
+    PYTHONUNBUFFERED=true python3 ${params.home}/07_run_queries/run_queries.py \
         --in-db-path ${params.neo_tmp_path} \
-        --out-csvs-path materialised_queries
+        --out-jsons-path materialised_queries
     """
 }
 
@@ -483,7 +486,7 @@ process csvs_to_sqlite {
     #!/usr/bin/env bash
     set -Eeuo pipefail
     cp -r ${neo_db}/* ${params.neo_tmp_path}
-    PYTHONUNBUFFERED=true python3 ${params.home}/08_run_queries/csvs_to_sqlite.py --out-sqlite-path materialised_queries.sqlite3
+    PYTHONUNBUFFERED=true python3 ${params.home}/07_run_queries/csvs_to_sqlite.py --out-sqlite-path materialised_queries.sqlite3
     pigz --best materialised_queries.sqlite3
     """
 }
@@ -508,12 +511,12 @@ process create_solr_nodes_core {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    python3 ${params.home}/06_prepare_db_import/make_solr_config.py \
+    python3 ${params.home}/08_create_other_dbs/solr/make_solr_config.py \
         --subgraph-name ${params.subgraph} \
         --in-summary-json ${params.tmp}/${params.config}/${params.subgraph}/summary.json \
-        --in-template-config-dir ${params.home}/06_prepare_db_import/solr_config_template \
+        --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
         --out-config-dir solr_config
-    python3 ${params.home}/07_create_db/solr/solr_import.slurm.py \
+    python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
         --solr-config solr_config --core grebi_nodes_${params.subgraph} --in-data . --out-path solr --port 8985 --mem ${params.solr_mem}
     """
 }
@@ -537,12 +540,12 @@ process create_solr_edges_core {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    python3 ${params.home}/06_prepare_db_import/make_solr_config.py \
+    python3 ${params.home}/08_create_other_dbs/solr/make_solr_config.py \
         --subgraph-name ${params.subgraph} \
         --in-summary-json ${params.tmp}/${params.config}/${params.subgraph}/summary.json \
-        --in-template-config-dir ${params.home}/06_prepare_db_import/solr_config_template \
+        --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
         --out-config-dir solr_config
-    python3 ${params.home}/07_create_db/solr/solr_import.slurm.py \
+    python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
         --solr-config solr_config --core grebi_edges_${params.subgraph} --in-data . --out-path /dev/shm/solr --port 8986 --mem ${params.solr_mem}
     mv /dev/shm/solr solr
     """
@@ -566,12 +569,66 @@ process create_solr_autocomplete_core {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    python3 ${params.home}/06_prepare_db_import/make_solr_autocomplete_config.py \
+    python3 ${params.home}/08_create_other_dbs/solr/make_solr_autocomplete_config.py \
         --subgraph-name ${params.subgraph} \
-        --in-template-config-dir ${params.home}/06_prepare_db_import/solr_config_template \
+        --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
         --out-config-dir solr_config
-    python3 ${params.home}/07_create_db/solr/solr_import.slurm.py \
+    python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
         --solr-config solr_config --core grebi_autocomplete_${params.subgraph} --in-data . --in-names-txt ${names_txt} --out-path solr --port 8987 --mem ${params.solr_mem}
+    """
+}
+
+process create_solr_queries_core {
+    cache "lenient"
+    memory "4 GB" 
+    time "4h"
+    cpus "4"
+
+    publishDir "${params.tmp}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
+
+    input:
+    path(queries_jsonl)
+
+    output:
+    path("solr/data/grebi_queries_${params.subgraph}")
+
+    script:
+    """
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    python3 ${params.home}/08_create_other_dbs/solr/make_solr_queries_config.py \
+        --subgraph-name ${params.subgraph} \
+        --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
+        --out-config-dir solr_config
+    python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
+        --solr-config solr_config --core grebi_queries_${params.subgraph} --in-data . --out-path solr --port 8987 --mem ${params.solr_mem}
+    """
+}
+
+process create_solr_mat_cores {
+    cache "lenient"
+    memory "4 GB" 
+    time "4h"
+    cpus "4"
+
+    publishDir "${params.tmp}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
+
+    input:
+    path(results_jsonl)
+
+    output:
+    path("solr/data/grebi_results__${params.subgraph}__${results_jsonl.baseName}")
+
+    script:
+    """
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    python3 ${params.home}/08_create_other_dbs/solr/make_solr_queries_config.py \
+        --subgraph-name ${params.subgraph} \
+        --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
+        --out-config-dir solr_config
+    python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
+        --solr-config solr_config --core grebi_results__${params.subgraph}__${results_jsonl.baseName} --in-data . --out-path solr --port 8987 --mem ${params.solr_mem}
     """
 }
 
@@ -707,7 +764,6 @@ process copy_mat_queries_to_ftp {
 
     input: 
     path(csvs)
-    path(sqlite)
 
     script:
     """
@@ -715,7 +771,6 @@ process copy_mat_queries_to_ftp {
     set -Eeuo pipefail
     mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/query_results
     cp -f ${csvs} /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/query_results/
-    cp -f ${sqlite} /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/query_results/all_query_results.sqlite3.gz
     """
 }
 

@@ -34,8 +34,8 @@ def main():
             '--bind ' + os.path.abspath(".") + ':/mnt',
             '--bind ' + shlex.quote(neo_data_path) + ':/data',
             '--bind ' + shlex.quote(neo_logs_path) + ':/logs',
-            '--bind ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '07_create_db/neo4j/neo4j_import.dockersh')) + ':/import.sh',
-            '--bind ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '07_create_db/neo4j/cypher')) + ':/cypher',
+            '--bind ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '06_create_neo_db/neo4j_import.dockersh')) + ':/import.sh',
+            '--bind ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '06_create_neo_db/cypher')) + ':/cypher',
             '--writable-tmpfs',
             '--network=none',
             '--env NEO4J_AUTH=none',
@@ -49,8 +49,8 @@ def main():
         ] + list(map(lambda f: "-v " + os.path.abspath(f) + ":/mnt/" + os.path.basename(f), glob.glob(args.in_csv_path + "/neo_*"))) + [
             '-v ' + shlex.quote(neo_data_path) + ':/data',
             '-v ' + shlex.quote(neo_logs_path) + ':/logs',
-            '-v ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '07_create_db/neo4j/neo4j_import.dockersh')) + ':/import.sh',
-            '-v ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '07_create_db/neo4j/cypher')) + ':/cypher',
+            '-v ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '06_create_neo_db/neo4j_import.dockersh')) + ':/import.sh',
+            '-v ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '06_create_neo_db/cypher')) + ':/cypher',
             '-e NEO4J_AUTH=none',
             'neo4j:5.18.0',
             'bash /import.sh'

@@ -15,6 +15,8 @@ from py2neo import Graph
 import yaml
 graph = Graph("bolt://localhost:7687")
 
+metadatas = []
+
 for file in os.listdir("/materialised_queries"):
     if not file.endswith(".yaml"):
         continue
@@ -26,7 +28,10 @@ for file in os.listdir("/materialised_queries"):
     start_time = timer()
 
     print(f"Running query {query_id}")
-    df = DataFrame(graph.run(query['cypher_query']).data())
+
+    with open(f"/out/{query_id}.results.jsonl", "w") as f:
+        for row in graph.run(query['cypher_query']).data():
+            json.dump(row, f, skipkeys=True)
 
     end_time = timer()
 
@@ -34,11 +39,11 @@ for file in os.listdir("/materialised_queries"):
     query['end_time'] = end_time
     query['time'] = end_time - start_time
 
-    print(f"Saving {len(df)} rows to {Path(f'/out/{query_id}.csv.gz')}")
-    df.to_csv(Path(f"/out/{query_id}.csv.gz"), index=False, compression="gzip")
+    metadatas.append(query)
 
-    with open(f"/out/{query_id}.json", "w") as f:
-        json.dump(query, f)
+with open(f"/out/queries.jsonl", "w") as f:
+    for metadata in metadatas:
+        json.dump(metadata, f, skipkeys=True)
 
 os.system("sleep 20")
 os.system("neo4j stop")
