@@ -470,6 +470,28 @@ process run_materialised_queries {
     """
 }
 
+process results_to_csv {
+    cache "lenient"
+    memory "8 GB" 
+    time "8h"
+    cpus "8"
+
+    input:
+    path(results_jsonl)
+
+    output:
+    path("${results_jsonl.baseName}.csv.gz")
+
+    script:
+    """
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    cat ${results_jsonl} | \
+    python3 ${params.home}/07_run_queries/jsonl_to_csv.py \
+    | pigz --best > ${results_jsonl.baseName}.csv.gz
+    """
+}
+
 process link_results {
     cache "lenient"
     memory "8 GB" 
