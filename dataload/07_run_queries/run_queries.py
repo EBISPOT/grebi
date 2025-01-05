@@ -46,7 +46,7 @@ def main():
     else:
         cmd = ' '.join([
             'docker run',
-            '--user="$(id -u):$(id -g)"'
+            '--user="$(id -u):$(id -g)"',
             '-v ' + shlex.quote(neo_data_path) + ':/data',
             '-v ' + shlex.quote(neo_logs_path) + ':/logs',
             '-v ' + os.path.abspath(os.path.join(os.environ['GREBI_DATALOAD_HOME'], '07_run_queries/run_queries.dockerpy')) + ':/run_queries.py',

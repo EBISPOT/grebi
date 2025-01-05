@@ -48,18 +48,16 @@ workflow {
 
     run_materialised_queries(neo_db)
 
-    csv_results = results_to_csv(run_materialised_queries.out.results)
-    linked_results = link_results(run_materialised_queries.out.results)
+    csv_results = results_to_csv(run_materialised_queries.out.results.flatten())
+    linked_results = link_results(run_materialised_queries.out.results.flatten(), indexed.metadata_jsonl, groups_txt)
 
     solr_inputs = prepare_solr(link.out.nodes, link.out.edges)
     solr_nodes_core = create_solr_nodes_core(prepare_solr.out.nodes.collect(), indexed.names_txt)
     solr_edges_core = create_solr_edges_core(prepare_solr.out.edges.collect(), indexed.names_txt)
     solr_autocomplete_core = create_solr_autocomplete_core(indexed.names_txt)
+    solr_results_cores = create_solr_results_cores(linked_results)
 
-    solr_queries_core = create_solr_queries_core(run_materialised_queries.out.metadata)
-    solr_mat_cores = create_solr_mat_cores(linked_results)
-
-    solr_tgz = package_solr(solr_nodes_core, solr_edges_core, solr_autocomplete_core, solr_mat_cores, solr_queries_core)
+    solr_tgz = package_solr(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core).concat(solr_results_cores))
     neo_tgz = package_neo(neo_db)
 
     if(params.is_ebi == "true") {
@@ -71,7 +69,7 @@ workflow {
 
         copy_summary_to_staging(merge_summary_jsons.out)
         copy_solr_config_to_staging()
-        copy_solr_cores_to_staging(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core).concat(solr_queries_core).concat(solr_mat_cores))
+        copy_solr_cores_to_staging(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core).concat(solr_results_cores))
         copy_sqlite_to_staging(sqlite)
         copy_neo_to_staging(neo_db)
     }
@@ -290,7 +288,7 @@ process merge_summary_jsons {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    python3 ${params.home}/05_materialise/merge_summary_jsons.py ${summary_jsons} > ${params.subgraph}_summary.json
+    python3 ${params.home}/05_link/merge_summary_jsons.py ${summary_jsons} > ${params.subgraph}_summary.json
     """
 }
 
@@ -455,9 +453,9 @@ process run_materialised_queries {
     path(neo_db)
 
     output:
-    path("materialised_queries/queries.jsonl"), emit: metadata
-    path("materialised_queries/*.results.jsonl"), emit: results
-    path("materialised_queries/*.json"), emit: metadatas
+    path("query_results/queries.jsonl"), emit: metadata
+    path("query_results/*.results.jsonl"), emit: results
+    path("query_results/*.json"), emit: metadatas
 
     script:
     """
@@ -466,7 +464,7 @@ process run_materialised_queries {
     cp -r ${neo_db}/* ${params.neo_tmp_path}
     PYTHONUNBUFFERED=true python3 ${params.home}/07_run_queries/run_queries.py \
         --in-db-path ${params.neo_tmp_path} \
-        --out-jsons-path materialised_queries
+        --out-jsons-path query_results
     """
 }
 
@@ -480,7 +478,7 @@ process results_to_csv {
     path(results_jsonl)
 
     output:
-    path("${results_jsonl.baseName}.csv.gz")
+    path("${results_jsonl.name}.csv.gz")
 
     script:
     """
@@ -488,7 +486,7 @@ process results_to_csv {
     set -Eeuo pipefail
     cat ${results_jsonl} | \
     python3 ${params.home}/07_run_queries/jsonl_to_csv.py \
-    | pigz --best > ${results_jsonl.baseName}.csv.gz
+    | pigz --best > ${results_jsonl.name}.csv.gz
     """
 }
 
@@ -500,9 +498,11 @@ process link_results {
 
     input:
     path(results_jsonl)
+    path(metadata_jsonl)
+    path(groups_txt)
 
     output:
-    path("${results_jsonl.baseName}.linked_results.jsonl")
+    path("${results_jsonl.name}.linked_results.jsonl")
 
     script:
     """
@@ -512,7 +512,7 @@ process link_results {
     ${params.home}/target/release/grebi_link_results \
           --in-metadata-jsonl ${metadata_jsonl} \
           --groups-txt ${groups_txt} \
-          > ${results_jsonl.baseName}.linked_results.jsonl
+          > ${results_jsonl.name}.linked_results.jsonl
     """
 }
 
@@ -627,34 +627,7 @@ process create_solr_autocomplete_core {
     """
 }
 
-process create_solr_queries_core {
-    cache "lenient"
-    memory "4 GB" 
-    time "4h"
-    cpus "4"
-
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
-
-    input:
-    path(queries_jsonl)
-
-    output:
-    path("solr/data/grebi_queries_${params.subgraph}")
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    python3 ${params.home}/08_create_other_dbs/solr/make_solr_queries_config.py \
-        --subgraph-name ${params.subgraph} \
-        --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
-        --out-config-dir solr_config
-    python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
-        --solr-config solr_config --core grebi_queries_${params.subgraph} --in-data . --out-path solr --port 8987 --mem ${params.solr_mem}
-    """
-}
-
-process create_solr_mat_cores {
+process create_solr_results_cores {
     cache "lenient"
     memory "4 GB" 
     time "4h"
@@ -666,18 +639,19 @@ process create_solr_mat_cores {
     path(results_jsonl)
 
     output:
-    path("solr/data/grebi_results__${params.subgraph}__${results_jsonl.baseName}")
+    path("solr/data/grebi_results__${params.subgraph}__${results_jsonl.name}")
 
     script:
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    python3 ${params.home}/08_create_other_dbs/solr/make_solr_queries_config.py \
+    python3 ${params.home}/08_create_other_dbs/solr/make_solr_results_config.py \
         --subgraph-name ${params.subgraph} \
+        --query-id ${results_jsonl.name} \
         --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
         --out-config-dir solr_config
     python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
-        --solr-config solr_config --core grebi_results__${params.subgraph}__${results_jsonl.baseName} --in-data . --out-path solr --port 8987 --mem ${params.solr_mem}
+        --solr-config solr_config --core grebi_results__${params.subgraph}__${results_jsonl.name} --in-data . --out-path solr --port 8987 --mem ${params.solr_mem}
     """
 }
 
@@ -710,9 +684,7 @@ process package_solr {
     publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
 
     input: 
-    path(solr_nodes_core)
-    path(solr_edges_core)
-    path(solr_autocomplete_core)
+    path(cores)
 
     output:
     path("${params.subgraph}_solr.tgz")
@@ -721,10 +693,10 @@ process package_solr {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    cp -f ${params.home}/06_prepare_db_import/solr_config_template/*.xml .
-    cp -f ${params.home}/06_prepare_db_import/solr_config_template/*.cfg .
+    cp -f ${params.home}/08_create_other_dbs/solr/solr_config_template/*.xml .
+    cp -f ${params.home}/08_create_other_dbs/solr/solr_config_template/*.cfg .
     tar -chf ${params.subgraph}_solr.tgz --transform 's,^,solr/,' --use-compress-program="pigz --fast" \
-	*.xml *.cfg ${solr_nodes_core} ${solr_edges_core} ${solr_autocomplete_core}
+	*.xml *.cfg ${cores}
     """
 }
 
@@ -852,8 +824,8 @@ process copy_solr_config_to_staging {
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    cp -f ${params.home}/06_prepare_db_import/solr_config_template/*.xml .
-    cp -f ${params.home}/06_prepare_db_import/solr_config_template/*.cfg .
+    cp -f ${params.home}/08_create_other_dbs/solr/solr_config_template/*.xml .
+    cp -f ${params.home}/08_create_other_dbs/solr/solr_config_template/*.cfg .
     mkdir -p /nfs/public/rw/ontoapps/grebi/staging/solr
     cp -LR * /nfs/public/rw/ontoapps/grebi/staging/solr/
     """

@@ -59,6 +59,7 @@ fn main() {
 
         let mut json:serde_json::Map<String,Value> = serde_json::from_slice(&line).unwrap();
         let mut refs = serde_json::Map::new();
+        let mut nodeids:HashSet<String> = HashSet::new();
 
         for (k,v) in json.iter() {
 
@@ -72,6 +73,7 @@ fn main() {
                 let metadata = node_metadata.get(k_group.unwrap());
                 if metadata.is_some() {
                     refs.insert(k.as_str().to_string(), serde_json::from_slice( metadata.unwrap().json.as_slice() ).unwrap() );
+                    nodeids.insert(String::from_utf8(k_group.unwrap().to_vec()).unwrap().to_string()); 
                 }
             }
 
@@ -81,11 +83,13 @@ fn main() {
                 let metadata = node_metadata.get(v_group.unwrap());
                 if metadata.is_some() {
                     refs.insert(v.as_str().unwrap().to_string(), serde_json::from_slice( metadata.unwrap().json.as_slice() ).unwrap() );
+                    nodeids.insert(String::from_utf8(v_group.unwrap().to_vec()).unwrap().to_string()); 
                 }
             }
         }
 
         json.insert("_refs".to_string(), Value::Object(refs));
+	json.insert("_node_ids".to_string(), Value::Array( nodeids.iter().map(|id| Value::String(id.clone())).collect()));
 
         writer.write_all(Value::Object(json).to_string().as_bytes()).unwrap();
         writer.write_all("\n".as_bytes()).unwrap();
