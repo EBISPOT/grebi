@@ -1,7 +1,13 @@
 #!/bin/bash
+
+if [ -z "$GREBI_SUBGRAPH" ]; then
+  echo "Set GREBI_SUBGRAPH to run this script"
+  exit 1
+fi
+
 export GREBI_DATALOAD_HOME=/nfs/production/parkinso/spot/grebi/dataload
 export GREBI_QUERY_YAMLS_PATH=/nfs/production/parkinso/spot/grebi/materialised_queries
-export GREBI_TMP=/hps/nobackup/parkinso/spot/grebi/tmp
+export GREBI_OUT_DIR=/hps/nobackup/parkinso/spot/grebi/$GREBI_SUBGRAPH/out
 export GREBI_CONFIG=ebi
 export GREBI_IS_EBI=true
 export GREBI_TIMESTAMP=$(date +"%Y-%b-%d")
@@ -10,10 +16,13 @@ export GREBI_NEXTFLOW_CONFIG=$GREBI_DATALOAD_HOME/nextflow/codon_nextflow.config
 module load nextflow-22.10.1-gcc-11.2.0-ju5saqw
 module load python-3.10.2-gcc-9.3.0-gswnsij
 source /nfs/production/parkinso/spot/grebi/.venv/bin/activate
-cd /hps/nobackup/parkinso/spot/grebi/
 export PYTHONUNBUFFERED=true
-srun -p datamover --time 1:0:0 --mem 8g bash -c "rm -rf /nfs/public/rw/ontoapps/grebi/staging && mkdir /nfs/public/rw/ontoapps/grebi/staging"
-srun --time 3-0:0:0 --mem 8g bash -c "rm -rf nextflow* work* tmp"
-srun --time 3-0:0:0 --mem 8g bash -c "python3 ${GREBI_DATALOAD_HOME}/scripts/dataload.py"
+
+mkdir -p /hps/nobackup/parkinso/spot/grebi/$GREBI_SUBGRAPH
+mkdir -p $GREBI_OUT_DIR
+
+cd /hps/nobackup/parkinso/spot/grebi/$GREBI_SUBGRAPH
+
+nextflow $GREBI_DATALOAD_HOME/nextflow/load_subgraph.nf -c $GREBI_NEXTFLOW_CONFIG -resume
 
 

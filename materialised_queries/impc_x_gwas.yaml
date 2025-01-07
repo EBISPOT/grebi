@@ -19,7 +19,7 @@ cypher_query: |-
   MATCH (speciesNeutralPhenotype)<-[:`biolink:broad_match`]-(descendantPhenotype)-[:sourceId]->(descendantSourceId)
   WHERE "OLS.mp" IN descendantPhenotype.`grebi:datasources`
   MATCH (descendantPhenotype)<-[:`impc:phenotype`]-(mouseGene)
-  RETURN "gwas->oba->upheno->mp->impc" AS graph_path,
+  RETURN DISTINCT "gwas->oba->upheno->mp->impc" AS graph_path,
   [id in snp.id WHERE id =~ "rs[0-9]*" | id][0] AS gwas_variant,
   [id in trait.id WHERE id =~ "oba:.*" | id][0] AS trait_id,
   trait.`grebi:name`[0] as trait_name,

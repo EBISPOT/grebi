@@ -32,6 +32,7 @@ for file in os.listdir("/materialised_queries"):
     with open(f"/out/{query_id}.results.jsonl", "w") as f:
         for row in graph.run(query['cypher_query']).data():
             json.dump(row, f, skipkeys=True)
+            f.write("\n")
 
     end_time = timer()
 
@@ -47,6 +48,7 @@ for file in os.listdir("/materialised_queries"):
 with open(f"/out/queries.jsonl", "w") as f:
     for metadata in metadatas:
         json.dump(metadata, f, skipkeys=True)
+        f.write("\n")
 
 os.system("sleep 20")
 os.system("neo4j stop")

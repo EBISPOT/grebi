@@ -40,6 +40,11 @@ def main():
             '--writable-tmpfs',
             '--network=none',
             '--env NEO4J_AUTH=none',
+            '--env NEO4J_server_memory_heap_initial__size=300G',
+            '--env NEO4J_server_memory_heap_max__size=300G',
+            '--env NEO4J_server_memory_pagecache_size=150G',
+            '--env NEO4J_dbms_memory_transaction_total_max=150G',
+            '--env TINI_SUBREAPER=true',
             'docker://ghcr.io/ebispot/grebi_neo4j_with_extras:5.18.0',
             'python3 /run_queries.py'
         ])

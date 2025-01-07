@@ -4,12 +4,11 @@ nextflow.enable.dsl=2
 import groovy.json.JsonSlurper
 jsonSlurper = new JsonSlurper()
 
-params.tmp = "$GREBI_TMP"
+params.out = "$GREBI_OUT"
 params.home = "$GREBI_DATALOAD_HOME"
 params.config = "$GREBI_CONFIG"
 params.subgraph = "$GREBI_SUBGRAPH"
 params.timestamp = "$GREBI_TIMESTAMP"
-params.is_ebi = "$GREBI_IS_EBI"
 params.solr_mem = "140g"
 params.neo_tmp_path = "/dev/shm"
 
@@ -52,27 +51,13 @@ workflow {
     linked_results = link_results(run_materialised_queries.out.results.flatten(), indexed.metadata_jsonl, groups_txt)
 
     solr_inputs = prepare_solr(link.out.nodes, link.out.edges)
-    solr_nodes_core = create_solr_nodes_core(prepare_solr.out.nodes.collect(), indexed.names_txt)
-    solr_edges_core = create_solr_edges_core(prepare_solr.out.edges.collect(), indexed.names_txt)
+    solr_nodes_core = create_solr_nodes_core(prepare_solr.out.nodes.collect(), indexed.names_txt, merge_summary_jsons.out)
+    solr_edges_core = create_solr_edges_core(prepare_solr.out.edges.collect(), indexed.names_txt, merge_summary_jsons.out)
     solr_autocomplete_core = create_solr_autocomplete_core(indexed.names_txt)
     solr_results_cores = create_solr_results_cores(linked_results)
 
-    solr_tgz = package_solr(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core).concat(solr_results_cores))
+    solr_tgz = package_solr(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core).concat(solr_results_cores).collect())
     neo_tgz = package_neo(neo_db)
-
-    if(params.is_ebi == "true") {
-        copy_summary_to_ftp(merge_summary_jsons.out)
-        copy_solr_to_ftp(solr_tgz)
-        copy_neo_to_ftp(neo_tgz)
-        copy_sqlite_to_ftp(sqlite)
-        copy_mat_queries_to_ftp(csv_results.concat(run_materialised_queries.out.metadatas).collect())
-
-        copy_summary_to_staging(merge_summary_jsons.out)
-        copy_solr_config_to_staging()
-        copy_solr_cores_to_staging(solr_nodes_core.concat(solr_edges_core).concat(solr_autocomplete_core).concat(solr_results_cores))
-        copy_sqlite_to_staging(sqlite)
-        copy_neo_to_staging(neo_db)
-    }
 }
 
 process prepare {
@@ -208,8 +193,6 @@ process index {
     memory "4 GB" 
     time "8h"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
-
     input:
     val(merged_filenames)
 
@@ -276,7 +259,7 @@ process merge_summary_jsons {
     memory "4 GB"
     time "1h"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
 
     input:
     path(summary_jsons)
@@ -319,7 +302,7 @@ process create_sqlite {
     errorStrategy 'retry'
     maxRetries 10
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
 
     input:
     val(compressed_blobs)
@@ -345,7 +328,7 @@ process prepare_neo {
     memory "4 GB" 
     time "1h"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}/neo4j_csv", overwrite: true
+    publishDir "${params.out}/${params.config}/${params.subgraph}/neo4j_csv", overwrite: true
 
     input:
     path(summary_json)
@@ -423,7 +406,7 @@ process create_neo {
     time "8h"
     cpus "8"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
 
     input:
     path(neo_inputs)
@@ -447,7 +430,7 @@ process run_materialised_queries {
     time "8h"
     cpus "8"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
 
     input:
     path(neo_db)
@@ -478,7 +461,7 @@ process results_to_csv {
     path(results_jsonl)
 
     output:
-    path("${results_jsonl.name}.csv.gz")
+    path("${results_jsonl.simpleName}.csv.gz")
 
     script:
     """
@@ -486,7 +469,7 @@ process results_to_csv {
     set -Eeuo pipefail
     cat ${results_jsonl} | \
     python3 ${params.home}/07_run_queries/jsonl_to_csv.py \
-    | pigz --best > ${results_jsonl.name}.csv.gz
+    | pigz --best > ${results_jsonl.simpleName}.csv.gz
     """
 }
 
@@ -502,7 +485,7 @@ process link_results {
     path(groups_txt)
 
     output:
-    path("${results_jsonl.name}.linked_results.jsonl")
+    path("${results_jsonl.simpleName}.linked_results.jsonl")
 
     script:
     """
@@ -512,7 +495,7 @@ process link_results {
     ${params.home}/target/release/grebi_link_results \
           --in-metadata-jsonl ${metadata_jsonl} \
           --groups-txt ${groups_txt} \
-          > ${results_jsonl.name}.linked_results.jsonl
+          > ${results_jsonl.simpleName}.linked_results.jsonl
     """
 }
 
@@ -522,7 +505,7 @@ process csvs_to_sqlite {
     time "12h"
     cpus "8"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
 
     input:
     path(csvs)
@@ -547,11 +530,12 @@ process create_solr_nodes_core {
     time "23h"
     cpus "8"
     
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
+    publishDir "${params.out}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
 
     input:
     path(solr_inputs)
     path(names_txt)
+    path(summary_json)
 
     output:
     path("solr/data/grebi_nodes_${params.subgraph}")
@@ -562,7 +546,7 @@ process create_solr_nodes_core {
     set -Eeuo pipefail
     python3 ${params.home}/08_create_other_dbs/solr/make_solr_config.py \
         --subgraph-name ${params.subgraph} \
-        --in-summary-json ${params.tmp}/${params.config}/${params.subgraph}/summary.json \
+        --in-summary-json ${summary_json} \
         --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
         --out-config-dir solr_config
     python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
@@ -576,11 +560,12 @@ process create_solr_edges_core {
     time "23h"
     cpus "8"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
+    publishDir "${params.out}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
 
     input:
     path(solr_inputs)
     path(names_txt)
+    path(summary_json)
 
     output:
     path("solr/data/grebi_edges_${params.subgraph}")
@@ -591,7 +576,7 @@ process create_solr_edges_core {
     set -Eeuo pipefail
     python3 ${params.home}/08_create_other_dbs/solr/make_solr_config.py \
         --subgraph-name ${params.subgraph} \
-        --in-summary-json ${params.tmp}/${params.config}/${params.subgraph}/summary.json \
+        --in-summary-json ${summary_json} \
         --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
         --out-config-dir solr_config
     python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
@@ -606,7 +591,7 @@ process create_solr_autocomplete_core {
     time "4h"
     cpus "4"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
+    publishDir "${params.out}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
 
     input:
     path(names_txt)
@@ -633,13 +618,13 @@ process create_solr_results_cores {
     time "4h"
     cpus "4"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
+    publishDir "${params.out}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
 
     input:
     path(results_jsonl)
 
     output:
-    path("solr/data/grebi_results__${params.subgraph}__${results_jsonl.name}")
+    path("solr/data/grebi_results__${params.subgraph}__${results_jsonl.simpleName}")
 
     script:
     """
@@ -647,11 +632,11 @@ process create_solr_results_cores {
     set -Eeuo pipefail
     python3 ${params.home}/08_create_other_dbs/solr/make_solr_results_config.py \
         --subgraph-name ${params.subgraph} \
-        --query-id ${results_jsonl.name} \
+        --query-id ${results_jsonl.simpleName} \
         --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
         --out-config-dir solr_config
     python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
-        --solr-config solr_config --core grebi_results__${params.subgraph}__${results_jsonl.name} --in-data . --out-path solr --port 8987 --mem ${params.solr_mem}
+        --solr-config solr_config --core grebi_results__${params.subgraph}__${results_jsonl.simpleName} --in-data . --out-path solr --port 8987 --mem ${params.solr_mem}
     """
 }
 
@@ -661,7 +646,7 @@ process package_neo {
     time "8h"
     cpus "8"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
 
     input: 
     path("${params.subgraph}_neo4j")
@@ -681,7 +666,7 @@ process package_solr {
     time "8h"
     cpus "8"
 
-    publishDir "${params.tmp}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
 
     input: 
     path(cores)
@@ -697,210 +682,6 @@ process package_solr {
     cp -f ${params.home}/08_create_other_dbs/solr/solr_config_template/*.cfg .
     tar -chf ${params.subgraph}_solr.tgz --transform 's,^,solr/,' --use-compress-program="pigz --fast" \
 	*.xml *.cfg ${cores}
-    """
-}
-
-process copy_neo_to_ftp {
-    
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path("neo4j.tgz")
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}
-    cp -f neo4j.tgz /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/${params.subgraph}_neo4j.tgz
-    """
-}
-
-process copy_summary_to_ftp {
-    
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path(summary_json)
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}
-    cp -f ${summary_json} /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/
-    """
-}
-
-process copy_solr_to_ftp {
-    
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path("solr.tgz")
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}
-    cp -f solr.tgz /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/${params.subgraph}_solr.tgz
-    """
-}
-
-process copy_sqlite_to_ftp {
-    
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path("${params.subgraph}.sqlite3")
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}
-    cp -f ${params.subgraph}.sqlite3 /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/${params.subgraph}.sqlite3
-    """
-}
-
-process copy_mat_queries_to_ftp {
-    
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path(csvs)
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/query_results
-    cp -f ${csvs} /nfs/ftp/public/databases/spot/kg/${params.subgraph}/${params.timestamp.trim()}/query_results/
-    """
-}
-
-process copy_summary_to_staging {
-    
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path(summary_json)
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/public/rw/ontoapps/grebi/staging/summaries
-    cp -f ${summary_json} /nfs/public/rw/ontoapps/grebi/staging/summaries/
-    """
-}
-
-process copy_solr_config_to_staging {
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    cp -f ${params.home}/08_create_other_dbs/solr/solr_config_template/*.xml .
-    cp -f ${params.home}/08_create_other_dbs/solr/solr_config_template/*.cfg .
-    mkdir -p /nfs/public/rw/ontoapps/grebi/staging/solr
-    cp -LR * /nfs/public/rw/ontoapps/grebi/staging/solr/
-    """
-
-}
-
-process copy_solr_cores_to_staging {
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path(solr_core)
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/public/rw/ontoapps/grebi/staging/solr
-    cp -LR * /nfs/public/rw/ontoapps/grebi/staging/solr/
-    """
-}
-
-process copy_sqlite_to_staging {
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path(sqlite)
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/public/rw/ontoapps/grebi/staging/sqlite
-    cp -LR * /nfs/public/rw/ontoapps/grebi/staging/sqlite/
-    """
-}
-
-process copy_mat_queries_to_staging {
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path(sqlite)
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/public/rw/ontoapps/grebi/staging/materialised_queries
-    cp -LR * /nfs/public/rw/ontoapps/grebi/staging/materialised_queries/
-    """
-}
-
-process copy_neo_to_staging {
-    cache "lenient"
-    memory "32 GB" 
-    time "8h"
-    queue "datamover"
-
-    input: 
-    path(neodb)
-
-    script:
-    """
-    #!/usr/bin/env bash
-    set -Eeuo pipefail
-    mkdir -p /nfs/public/rw/ontoapps/grebi/staging/neo4j
-    cp -LR * /nfs/public/rw/ontoapps/grebi/staging/neo4j/
     """
 }
 
