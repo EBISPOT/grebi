@@ -514,8 +514,8 @@ process add_query_metadatas_to_graph_metadata {
     #!/usr/bin/env bash
     set -Eeuo pipefail
     python3 ${params.home}/07_run_queries/add_query_metadatas_to_graph_metadata.py \
-        ${graph_metadata_json}
-        ${metadata_jsons}
+        ${graph_metadata_json} \
+        ${metadata_jsons} \
         > ${params.subgraph}_metadata.json
     """
 }
