@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+import os
+from pathlib import Path
+from pandas import DataFrame
+import json
+from datetime import datetime
+
+os.system('echo "dbms.security.auth_enabled=false" >> /var/lib/neo4j/conf/neo4j.conf')
+
+os.system("neo4j start")
+os.system("sleep 20")
+
+from py2neo import Graph
+import yaml
+graph = Graph("bolt://localhost:7687")
+
+metadatas = []
+
+for file in os.listdir("/materialised_queries"):
+    if not file.endswith(".yaml"):
+        continue
+
+    query_id = Path(file).stem
+
+    query = yaml.safe_load(open(f"/materialised_queries/{file}"))
+
+    start_time = datetime.now()
+
+    print(f"Running query {query_id}")
+
+    with open(f"/out/{query_id}.results.jsonl", "w") as f:
+        for row in graph.run(query['cypher_query']).data():
+            json.dump(row, f, skipkeys=True)
+            f.write("\n")
+
+    end_time = datetime.now()
+
+    query['id'] = query_id
+    query['start_time'] = start_time.strftime("%Y-%m-%d %H:%M:%S")
+    query['end_time'] = end_time.strftime("%Y-%m-%d %H:%M:%S")
+    query['time'] = (end_time - start_time).total_seconds()
+
+    metadatas.append(query)
+
+    with open(f"/out/{query_id}.json", "w") as f:
+        json.dump(query, f, skipkeys=True)
+
+with open(f"/out/queries.json", "w") as f:
+    json.dump(metadatas, f, skipkeys=True)
+
+os.system("sleep 20")
+os.system("neo4j stop")
+os.system("sleep 20")
+

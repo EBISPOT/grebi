@@ -20,12 +20,13 @@ members = [
 	"02_assign_ids/grebi_superclasses2types",
 	"03_merge/grebi_merge",
 	"04_index/grebi_index",
-	"05_materialise/grebi_materialise",
-	"06_prepare_db_import/grebi_make_neo_csv",
-	"06_prepare_db_import/grebi_make_neo_ids_csv",
-	"06_prepare_db_import/grebi_make_solr",
-	"06_prepare_db_import/grebi_make_compressed_blob",
-	"07_create_db/sqlite/grebi_make_sqlite",
+	"05_link/grebi_link",
+	"06_create_neo_db/grebi_make_neo_csv",
+	"06_create_neo_db/grebi_make_neo_ids_csv",
+	"08_create_other_dbs/solr/grebi_make_solr",
+	"08_create_other_dbs/solr/grebi_link_results",
+	"08_create_other_dbs/sqlite/grebi_make_compressed_blob",
+	"08_create_other_dbs/sqlite/grebi_make_sqlite",
 	"grebi_shared"
 ]
 

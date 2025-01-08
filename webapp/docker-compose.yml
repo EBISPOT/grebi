@@ -14,17 +14,17 @@ services:
         - grebi-neo4j
         - grebi-solr
         - grebi-resolver-service
-        - grebi-summary-service
+        - grebi-metadata-service
       links:
         - grebi-neo4j
         - grebi-solr
         - grebi-resolver-service
-        - grebi-summary-service
+        - grebi-metadata-service
       environment:
         - GREBI_NEO4J_HOST=bolt://grebi-neo4j:7687/
         - GREBI_SOLR_HOST=http://grebi-solr:8983/
         - GREBI_RESOLVER_HOST=http://grebi-resolver-service:8080/
-        - GREBI_SUMMARY_HOST=http://grebi-summary-service:8081/
+        - GREBI_METADATA_HOST=http://grebi-metadata-service:8081/
     grebi-neo4j:
       image: neo4j:5.18.0
       ports:
@@ -49,14 +49,14 @@ services:
         - ${GREBI_SQLITE_SEARCH_PATH:?Need path to search for sqlite databases}:/sqlite
       environment:
         - GREBI_SQLITE_SEARCH_PATH=/sqlite
-    grebi-summary-service:
-      image: ghcr.io/ebispot/grebi_summary_service:dev
+    grebi-metadata-service:
+      image: ghcr.io/ebispot/grebi_metadata_service:dev
       ports:
         - 8081:8081
       volumes:
-        - ${GREBI_SUMMARY_JSON_SEARCH_PATH:?Need path to search for summary json files}:/summaryjsons
+        - ${GREBI_METADATA_JSON_SEARCH_PATH:?Need path to search for metadata json files}:/metadata
       environment:
-        - GREBI_SUMMARY_JSON_SEARCH_PATH=/summaryjsons
+        - GREBI_METADATA_JSON_SEARCH_PATH=/metadata
 volumes:
     grebi-neo4j-data:
 
