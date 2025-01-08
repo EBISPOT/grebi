@@ -12,3 +12,6 @@ lmdb-zero = "0.4.4"
 bloomfilter = "1.0.13"
 jemallocator = "0.5.4"
 clap = { version = "4.4.11", features = ["derive"] }
+sha1 = "0.10.6"
+hex = "0.4.3"
+

@@ -39,9 +39,9 @@ rm -rf $STAGING_PATH/sqlite/${SUBGRAPH}.sqlite3
 echo Extracting new data release
 
 tar --use-compress-program=pigz -xf $DATARELEASE_PATH/${SUBGRAPH}_neo4j.tgz -C $STAGING_PATH/neo4j
-tar --use-compress-program=pigz -xf $DATARELEASE_PATH/${SUBGRAPH}_solr.tgz -C $STAGING_PATH/solr
-cp -f $DATARELEASE_PATH/${SUBGRAPH}_metadata.json $STAGING_PATH/metadata
-cp -f $DATARELEASE_PATH/${SUBGRAPH}.sqlite3 $STAGING_PATH/sqlite
+tar --use-compress-program=pigz -xf $DATARELEASE_PATH/${SUBGRAPH}_solr.tgz -C $STAGING_PATH
+cp -f $DATARELEASE_PATH/${SUBGRAPH}_metadata.json $STAGING_PATH/metadata/
+cp -f $DATARELEASE_PATH/${SUBGRAPH}.sqlite3 $STAGING_PATH/sqlite/
 
 
 
