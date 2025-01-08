@@ -37,7 +37,8 @@ config['datasource_configs'] = [
     "./configs/datasource_configs/robokop_string.yaml",
     "./configs/datasource_configs/robokop_textmining.yaml",
     "./configs/datasource_configs/robokop_viralproteome.yaml",
-    "./configs/datasource_configs/mesh.yaml"
+    "./configs/datasource_configs/mesh.yaml",
+    "./configs/datasource_configs/primekg.yaml"
 ]
 
 if __name__ == '__main__':
