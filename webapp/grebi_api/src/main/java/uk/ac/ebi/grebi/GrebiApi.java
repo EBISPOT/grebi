@@ -19,9 +19,9 @@ import org.springframework.data.domain.Sort;
 import uk.ac.ebi.grebi.repo.GrebiNeoRepo;
 import uk.ac.ebi.grebi.db.GrebiSolrQuery;
 import uk.ac.ebi.grebi.db.ResolverClient;
-import uk.ac.ebi.grebi.db.SummaryClient;
+import uk.ac.ebi.grebi.db.MetadataClient;
 import uk.ac.ebi.grebi.repo.GrebiSolrRepo;
-import uk.ac.ebi.grebi.repo.GrebiSummaryRepo;
+import uk.ac.ebi.grebi.repo.GrebiMetadataRepo;
 
 
 public class GrebiApi {
@@ -30,25 +30,25 @@ public class GrebiApi {
 
         GrebiNeoRepo neo = null;
         GrebiSolrRepo solr = null;
-        GrebiSummaryRepo summary= null;
+        GrebiMetadataRepo metadata= null;
 
         Set<String> sqliteSubgraphs = null;
         Set<String> solrSubgraphs = null;
-        Set<String> summarySubgraphs = null;
+        Set<String> metadataServiceSubgraphs = null;
         Set<String> neoSubgraphs = null;
 
         while(true) {
             try {
                 solr = new GrebiSolrRepo();
-                summary = new GrebiSummaryRepo();
+                summary = new GrebiMetadataRepo();
                 sqliteSubgraphs = (new ResolverClient()).getSubgraphs();
                 solrSubgraphs = solr.getSubgraphs();
-                summarySubgraphs = summary.getSubgraphs();
-                if(new HashSet<>(List.of(sqliteSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
-                    throw new RuntimeException("SQLite/Solr/the summary jsons do not seem to contain the same subgraphs. Found: "
+                metadataServiceSubgraphs = metadata.getSubgraphs();
+                if(new HashSet<>(List.of(sqliteSubgraphs, solrSubgraphs, metadataServiceSubgraphs)).size() != 1) {
+                    throw new RuntimeException("SQLite/Solr/the metadata jsons do not seem to contain the same subgraphs. Found: "
                             + String.join(",", sqliteSubgraphs) + " for SQLite (from resolver service) and "
                             + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and "
-                            + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server)"
+                            + String.join(",", metadataServiceSubgraphs) + " for the summary jsons (from metadata server)"
                     );
                 }
                 break;
@@ -67,12 +67,12 @@ public class GrebiApi {
             try {
                 neo = new GrebiNeoRepo();
                 neoSubgraphs = neo.getSubgraphs();
-                if(new HashSet<>(List.of(sqliteSubgraphs, solrSubgraphs, summarySubgraphs)).size() != 1) {
+                if(new HashSet<>(List.of(sqliteSubgraphs, solrSubgraphs, metadataServiceSubgraphs)).size() != 1) {
                     neo = null;
                     throw new RuntimeException("SQLite/Solr/the summary jsons/neo4j do not seem to contain the same subgraphs. Found: "
                             + String.join(",", sqliteSubgraphs) + " for SQLite (from resolver service) and "
                             + String.join(",", solrSubgraphs) + " for Solr (from list of solr cores) and "
-                            + String.join(",", summarySubgraphs) + " for the summary jsons (from summary server) and "
+                            + String.join(",", metadataServiceSubgraphs) + " for the summary jsons (from summary server) and "
                             + String.join(",", neoSubgraphs) + " for neo4j"
                     );
                 }
@@ -93,13 +93,13 @@ public class GrebiApi {
 
         System.out.println("Found subgraphs: " + String.join(",", solrSubgraphs));
 
-        run(neo, solr, summary, solrSubgraphs);
+        run(neo, solr, metadata, solrSubgraphs);
     }
 
     static void run(
         final GrebiNeoRepo neo,
         final GrebiSolrRepo solr,
-        final GrebiSummaryRepo summary,
+        final GrebiMetadataRepo metadata,
         final Set<String> subgraphs
     ) {
 
@@ -130,7 +130,7 @@ public class GrebiApi {
                 })
                 .get("/api/v1/subgraphs/{subgraph}", ctx -> {
                     ctx.contentType("application/json");
-                    ctx.result(gson.toJson(summary.getSummary(ctx.pathParam("subgraph"))));
+                    ctx.result(gson.toJson(metadata.getSummary(ctx.pathParam("subgraph"))));
                 })
                 .get("/api/v1/subgraphs/{subgraph}/nodes/{nodeId}", ctx -> {
                     ctx.contentType("application/json");

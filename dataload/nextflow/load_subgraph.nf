@@ -4,11 +4,9 @@ nextflow.enable.dsl=2
 import groovy.json.JsonSlurper
 jsonSlurper = new JsonSlurper()
 
-params.out = "$GREBI_OUT"
+params.out = "$GREBI_OUT_DIR"
 params.home = "$GREBI_DATALOAD_HOME"
-params.config = "$GREBI_CONFIG"
 params.subgraph = "$GREBI_SUBGRAPH"
-params.timestamp = "$GREBI_TIMESTAMP"
 params.solr_mem = "140g"
 params.neo_tmp_path = "/dev/shm"
 
@@ -29,13 +27,13 @@ workflow {
 
     indexed = index(merged.collect())
 
-    link(merged.flatten(), indexed.metadata_jsonl, indexed.summary_json, Channel.value(config.exclude_edges + config.identifier_props), Channel.value(config.exclude_self_referential_edges + config.identifier_props), groups_txt)
-    merge_summary_jsons(indexed.summary_json.collect() + link.out.linked_summary.collect())
+    link(merged.flatten(), indexed.entity_metadata_jsonl, indexed.graph_metadata_json, Channel.value(config.exclude_edges + config.identifier_props), Channel.value(config.exclude_self_referential_edges + config.identifier_props), groups_txt)
+    merge_graph_metadata_jsons(indexed.graph_metadata_json.collect() + link.out.linked_summary.collect())
 
     compressed_blobs = create_compressed_blobs(link.out.nodes.mix(link.out.edges))
     sqlite = create_sqlite(compressed_blobs.collect())
 
-    neo_input_dir = prepare_neo(indexed.summary_json, link.out.nodes, link.out.edges)
+    neo_input_dir = prepare_neo(indexed.graph_metadata_json, link.out.nodes, link.out.edges)
 
     ids_csv = create_neo_ids_csv(indexed.ids_txt)
     neo_db = create_neo(
@@ -48,11 +46,13 @@ workflow {
     run_materialised_queries(neo_db)
 
     csv_results = results_to_csv(run_materialised_queries.out.results.flatten())
-    linked_results = link_results(run_materialised_queries.out.results.flatten(), indexed.metadata_jsonl, groups_txt)
+    linked_results = link_results(run_materialised_queries.out.results.flatten(), indexed.entity_metadata_jsonl, groups_txt)
+
+    add_query_metadatas_to_graph_metadata(run_materialised_queries.out.metadata.flatten().collect(), merge_graph_metadata_jsons.out)
 
     solr_inputs = prepare_solr(link.out.nodes, link.out.edges)
-    solr_nodes_core = create_solr_nodes_core(prepare_solr.out.nodes.collect(), indexed.names_txt, merge_summary_jsons.out)
-    solr_edges_core = create_solr_edges_core(prepare_solr.out.edges.collect(), indexed.names_txt, merge_summary_jsons.out)
+    solr_nodes_core = create_solr_nodes_core(prepare_solr.out.nodes.collect(), indexed.names_txt, merge_graph_metadata_jsons.out)
+    solr_edges_core = create_solr_edges_core(prepare_solr.out.edges.collect(), indexed.names_txt, merge_graph_metadata_jsons.out)
     solr_autocomplete_core = create_solr_autocomplete_core(indexed.names_txt)
     solr_results_cores = create_solr_results_cores(linked_results)
 
@@ -197,8 +197,8 @@ process index {
     val(merged_filenames)
 
     output:
-    path("metadata.jsonl"), emit: metadata_jsonl
-    path("summary.json"), emit: summary_json
+    path("entity_metadata.jsonl"), emit: entity_metadata_jsonl
+    path("graph_metadata.json"), emit: graph_metadata_json
     path("names.txt"), emit: names_txt
     path("ids_${params.subgraph}.txt"), emit: ids_txt
 
@@ -209,8 +209,8 @@ process index {
     cat ${merged_filenames.iterator().join(" ")} \
         | ${params.home}/target/release/grebi_index \
         --subgraph-name ${params.subgraph} \
-        --out-metadata-jsonl-path metadata.jsonl \
-        --out-summary-json-path summary.json \
+        --out-entity-metadata-jsonl-path entity_metadata.jsonl \
+        --out-graph-metadata-json-path graph_metadata.json \
         --out-names-txt names.txt \
         --out-ids-txt ids_${params.subgraph}.txt
     """
@@ -226,8 +226,8 @@ process link {
 
     input:
     path(merged_filename)
-    path(metadata_jsonl)
-    path(index_summary_json)
+    path(entity_metadata_jsonl)
+    path(index_graph_metadata_json)
     val(exclude)
     val(exclude_self_referential)
     path(groups_txt)
@@ -235,7 +235,7 @@ process link {
     output:
     path("linked_nodes_${task.index}.jsonl"), emit: nodes
     path("linked_edges_${task.index}.jsonl"), emit: edges
-    path("linked_summary_${task.index}.json"), emit: linked_summary
+    path("linked_graph_metadata_${task.index}.json"), emit: linked_summary
 
     script:
     """
@@ -243,35 +243,33 @@ process link {
     set -Eeuo pipefail
     cat ${merged_filename} \
         | ${params.home}/target/release/grebi_link \
-          --in-metadata-jsonl ${metadata_jsonl} \
-          --in-summary-json ${index_summary_json} \
+          --in-metadata-jsonl ${entity_metadata_jsonl} \
+          --in-graph-metadata-json ${index_graph_metadata_json} \
           --groups-txt ${groups_txt} \
           --out-edges-jsonl linked_edges_${task.index}.jsonl \
-          --out-summary-json linked_summary_${task.index}.json \
+          --out-graph-metadata-json linked_graph_metadata_${task.index}.json \
           --exclude ${exclude.iterator().join(",")} \
           --exclude-self-referential ${exclude_self_referential.iterator().join(",")} \
         > linked_nodes_${task.index}.jsonl
     """
 }
 
-process merge_summary_jsons {
+process merge_graph_metadata_jsons {
     cache "lenient"
     memory "4 GB"
     time "1h"
 
-    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
-
     input:
-    path(summary_jsons)
+    path(graph_metadata_jsons)
 
     output:
-    path("${params.subgraph}_summary.json")
+    path("${params.subgraph}_metadata_merged.json")
 
     script:
     """
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    python3 ${params.home}/05_link/merge_summary_jsons.py ${summary_jsons} > ${params.subgraph}_summary.json
+    python3 ${params.home}/05_link/merge_graph_metadata_jsons.py ${graph_metadata_jsons} > ${params.subgraph}_metadata_merged.json
     """
 }
 
@@ -302,7 +300,7 @@ process create_sqlite {
     errorStrategy 'retry'
     maxRetries 10
 
-    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.subgraph}", overwrite: true
 
     input:
     val(compressed_blobs)
@@ -328,10 +326,8 @@ process prepare_neo {
     memory "4 GB" 
     time "1h"
 
-    publishDir "${params.out}/${params.config}/${params.subgraph}/neo4j_csv", overwrite: true
-
     input:
-    path(summary_json)
+    path(graph_metadata_json)
     path(nodes_jsonl)
     path(edges_jsonl)
 
@@ -345,7 +341,7 @@ process prepare_neo {
     #!/usr/bin/env bash
     set -Eeuo pipefail
     ${params.home}/target/release/grebi_make_neo_csv \
-      --in-summary-jsons ${summary_json} \
+      --in-graph-metadata-jsons ${graph_metadata_json} \
       --in-nodes-jsonl ${nodes_jsonl} \
       --in-edges-jsonl ${edges_jsonl} \
       --out-nodes-csv-path neo_nodes_${params.subgraph}_${task.index}.csv \
@@ -406,8 +402,6 @@ process create_neo {
     time "8h"
     cpus "8"
 
-    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
-
     input:
     path(neo_inputs)
 
@@ -430,13 +424,13 @@ process run_materialised_queries {
     time "8h"
     cpus "8"
 
-    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.subgraph}", overwrite: true
 
     input:
     path(neo_db)
 
     output:
-    path("query_results/queries.jsonl"), emit: metadata
+    path("query_results/queries.json"), emit: metadata
     path("query_results/*.results.jsonl"), emit: results
     path("query_results/*.json"), emit: metadatas
 
@@ -481,7 +475,7 @@ process link_results {
 
     input:
     path(results_jsonl)
-    path(metadata_jsonl)
+    path(entity_metadata_jsonl)
     path(groups_txt)
 
     output:
@@ -493,9 +487,36 @@ process link_results {
     set -Eeuo pipefail
     cat ${results_jsonl} | \
     ${params.home}/target/release/grebi_link_results \
-          --in-metadata-jsonl ${metadata_jsonl} \
+          --in-metadata-jsonl ${entity_metadata_jsonl} \
           --groups-txt ${groups_txt} \
           > ${results_jsonl.simpleName}.linked_results.jsonl
+    """
+}
+
+process add_query_metadatas_to_graph_metadata {
+
+    cache "lenient"
+    memory "8 GB" 
+    time "8h"
+    cpus "8"
+
+    publishDir "${params.out}/${params.subgraph}", overwrite: true
+
+    input:
+    path(metadata_jsons)
+    path(graph_metadata_json)
+
+    output:
+    path("${params.subgraph}_metadata.json")
+
+    script:
+    """
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    python3 ${params.home}/07_run_queries/add_query_metadatas_to_graph_metadata.py \
+        ${graph_metadata_json}
+        ${metadata_jsons}
+        > ${params.subgraph}_metadata.json
     """
 }
 
@@ -505,7 +526,7 @@ process csvs_to_sqlite {
     time "12h"
     cpus "8"
 
-    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.subgraph}", overwrite: true
 
     input:
     path(csvs)
@@ -529,13 +550,11 @@ process create_solr_nodes_core {
     memory "4 GB" 
     time "23h"
     cpus "8"
-    
-    publishDir "${params.out}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
 
     input:
     path(solr_inputs)
     path(names_txt)
-    path(summary_json)
+    path(graph_metadata_json)
 
     output:
     path("solr/data/grebi_nodes_${params.subgraph}")
@@ -546,7 +565,7 @@ process create_solr_nodes_core {
     set -Eeuo pipefail
     python3 ${params.home}/08_create_other_dbs/solr/make_solr_config.py \
         --subgraph-name ${params.subgraph} \
-        --in-summary-json ${summary_json} \
+        --in-graph-metadata-json ${graph_metadata_json} \
         --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
         --out-config-dir solr_config
     python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
@@ -560,12 +579,10 @@ process create_solr_edges_core {
     time "23h"
     cpus "8"
 
-    publishDir "${params.out}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
-
     input:
     path(solr_inputs)
     path(names_txt)
-    path(summary_json)
+    path(graph_metadata_json)
 
     output:
     path("solr/data/grebi_edges_${params.subgraph}")
@@ -576,7 +593,7 @@ process create_solr_edges_core {
     set -Eeuo pipefail
     python3 ${params.home}/08_create_other_dbs/solr/make_solr_config.py \
         --subgraph-name ${params.subgraph} \
-        --in-summary-json ${summary_json} \
+        --in-graph-metadata-json ${graph_metadata_json} \
         --in-template-config-dir ${params.home}/08_create_other_dbs/solr/solr_config_template \
         --out-config-dir solr_config
     python3 ${params.home}/08_create_other_dbs/solr/solr_import.slurm.py \
@@ -590,8 +607,6 @@ process create_solr_autocomplete_core {
     memory "4 GB" 
     time "4h"
     cpus "4"
-
-    publishDir "${params.out}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
 
     input:
     path(names_txt)
@@ -617,8 +632,6 @@ process create_solr_results_cores {
     memory "4 GB" 
     time "4h"
     cpus "4"
-
-    publishDir "${params.out}/${params.config}/${params.subgraph}/solr_cores", overwrite: true, saveAs: { filename -> filename.replace("solr/data/", "") }
 
     input:
     path(results_jsonl)
@@ -646,7 +659,7 @@ process package_neo {
     time "8h"
     cpus "8"
 
-    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}${params.subgraph}", overwrite: true
 
     input: 
     path("${params.subgraph}_neo4j")
@@ -666,7 +679,7 @@ process package_solr {
     time "8h"
     cpus "8"
 
-    publishDir "${params.out}/${params.config}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}/${params.subgraph}", overwrite: true
 
     input: 
     path(cores)

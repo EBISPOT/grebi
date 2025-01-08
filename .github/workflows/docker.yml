@@ -39,12 +39,12 @@ jobs:
           docker tag ghcr.io/ebispot/grebi_resolver_service:${{github.sha}} ghcr.io/ebispot/grebi_resolver_service:${{ github.ref_name }}
           docker push --all-tags ghcr.io/ebispot/grebi_resolver_service
 
-      - name: Build and push GrEBI summary service Docker image
+      - name: Build and push GrEBI metadata service Docker image
         run: |
-          cd webapp/grebi_summary_service
-          docker build -t ghcr.io/ebispot/grebi_summary_service:${{ github.sha }} .
-          docker tag ghcr.io/ebispot/grebi_summary_service:${{github.sha}} ghcr.io/ebispot/grebi_summary_service:${{ github.ref_name }}
-          docker push --all-tags ghcr.io/ebispot/grebi_summary_service
+          cd webapp/grebi_metadata_service
+          docker build -t ghcr.io/ebispot/grebi_metadata_service:${{ github.sha }} .
+          docker tag ghcr.io/ebispot/grebi_metadata_service:${{github.sha}} ghcr.io/ebispot/grebi_metadata_service:${{ github.ref_name }}
+          docker push --all-tags ghcr.io/ebispot/grebi_metadata_service
 
       - name: Build and push GrEBI UI Docker image
         run: |

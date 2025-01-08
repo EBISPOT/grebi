@@ -31,7 +31,7 @@ struct Args {
     in_edges_jsonl: String,
 
     #[arg(long)]
-    in_summary_jsons: String,
+    in_graph_metadata_jsons: String,
 
     #[arg(long)]
     out_nodes_csv_path: String,
@@ -59,7 +59,7 @@ fn main() -> std::io::Result<()> {
     let mut all_edge_props: HashSet<String> = HashSet::new();
 
 
-    for f in args.in_summary_jsons.split(",") {
+    for f in args.in_graph_metadata_jsons.split(",") {
         let summary:Value = serde_json::from_reader(File::open(f).unwrap()).unwrap();
         for prop in summary["edge_props"].as_object().unwrap().keys() {
             all_edge_props.insert(prop.to_string());

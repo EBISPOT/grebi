@@ -48,13 +48,13 @@ struct Args {
     in_metadata_jsonl: String,
 
     #[arg(long)]
-    in_summary_json: String,
+    in_graph_metadata_json: String,
 
     #[arg(long)]
     out_edges_jsonl: String,
 
     #[arg(long)]
-    out_summary_json: String,
+    out_graph_metadata_json: String,
 
     #[arg(long)]
     groups_txt: String,
@@ -119,7 +119,7 @@ fn main() -> std::io::Result<()> {
 
     let mut types_to_count:HashMap<Vec<u8>,i64> = HashMap::new();
     {
-        let summary_json:Map<String, Value> = serde_json::from_reader(File::open(&args.in_summary_json).unwrap()).unwrap();
+        let summary_json:Map<String, Value> = serde_json::from_reader(File::open(&args.in_graph_metadata_json).unwrap()).unwrap();
         for (k, v) in summary_json["types"].as_object().unwrap() {
             types_to_count.insert(k.as_bytes().to_vec(), v.as_object().unwrap()["count"].as_i64().unwrap());
         }
@@ -134,8 +134,8 @@ fn main() -> std::io::Result<()> {
     let stdout = io::stdout().lock();
     let mut nodes_writer = BufWriter::new(stdout);
 
-    let summary_file = File::create(args.out_summary_json).unwrap();
-    let mut summary_writer = BufWriter::new(summary_file);
+    let summary_file = File::create(args.out_graph_metadata_json).unwrap();
+    let mut graph_metadata_writer = BufWriter::new(summary_file);
 
     let mut edge_summary:EdgeSummaryTable = HashMap::new();
 
@@ -263,7 +263,7 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    summary_writer.write_all(serde_json::to_string_pretty(&json!({
+    graph_metadata_writer.write_all(serde_json::to_string_pretty(&json!({
         "entity_prop_defs": entity_prop_defs,
         "edge_prop_defs": edge_prop_defs,
         "types": type_defs,
@@ -275,7 +275,7 @@ fn main() -> std::io::Result<()> {
         "edges": edge_summary
     })).unwrap().as_bytes()).unwrap();
 
-    summary_writer.flush().unwrap();
+    graph_metadata_writer.flush().unwrap();
 
     Ok(())
 }

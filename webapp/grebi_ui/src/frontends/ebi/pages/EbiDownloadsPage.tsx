@@ -90,10 +90,10 @@ const data: any[] = [
   },
   {
     description:
-      "JSON summary of the KG contents (< 1 MB)",
-    downloadLabel: "summary.json",
+      "JSON metadata of the KG contents (< 1 MB)",
+    downloadLabel: "metadata.json",
     downloadLink:
-      "https://ftp.ebi.ac.uk/pub/databases/spot/kg/ebi_full_monarch/latest/summary.json",
+      "https://ftp.ebi.ac.uk/pub/databases/spot/kg/ebi_full_monarch/latest/metadata.json",
     format: "JSON",
   },
 ];

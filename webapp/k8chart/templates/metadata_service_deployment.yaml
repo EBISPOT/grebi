@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-summary-service
+  name: {{ .Release.Name }}-metadata-service
   labels:
-    app: {{ .Release.Name }}-summary-service
+    app: {{ .Release.Name }}-metadata-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-summary-service
+      app: {{ .Release.Name }}-metadata-service
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-summary-service
+        app: {{ .Release.Name }}-metadata-service
     spec:
       volumes:
         - name: {{ .Release.Name }}-import
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-import-pvc
       containers:
-        - name: summary-service
-          image: ghcr.io/ebispot/grebi_summary_service:{{.Values.imageTag}}
+        - name: metadata-service
+          image: ghcr.io/ebispot/grebi_metadata_service:{{.Values.imageTag}}
           imagePullPolicy: Always
           volumeMounts:
             - mountPath: "/data_import"
@@ -34,8 +34,8 @@ spec:
               memory: 3Gi
               cpu: 0.5
           env:
-            - name: GREBI_SUMMARY_JSON_SEARCH_PATH
-              value: /data_import/summaries
+            - name: GREBI_METADATA_JSON_SEARCH_PATH
+              value: /data_import/metadata
             - name: JAVA_TOOL_OPTIONS
               value: -Xmx2048m
           ports:

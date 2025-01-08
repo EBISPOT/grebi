@@ -27,20 +27,20 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.ContentType;
 import com.google.common.base.Stopwatch;
 
-public class SummaryClient {
+public class MetadataClient {
 
-    static final String SUMMARY_HOST = System.getenv("GREBI_SUMMARY_HOST");
+    static final String METADATA_HOST = System.getenv("GREBI_METADATA_HOST");
 
 
-    public static String getSummaryHost() {
-        if (SUMMARY_HOST != null)
-            return SUMMARY_HOST;
+    public static String getMetadataHost() {
+        if (METADATA_HOST != null)
+            return METADATA_HOST;
         return "http://localhost:8081/";
     }
 
-    public Map<String,JsonElement> getSummaries() {
+    public Map<String,JsonElement> getMetadatas() {
         HttpClient client = HttpClientBuilder.create().build();
-        HttpGet request = new HttpGet(getSummaryHost());
+        HttpGet request = new HttpGet(getMetadataHost());
         HttpResponse response;
         try {
             response = client.execute(request);

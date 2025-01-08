@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE, STDOUT
 def main():
     parser = argparse.ArgumentParser(description='Create Solr config')
     parser.add_argument('--subgraph-name', type=str, help='subgraph name', required=True)
-    parser.add_argument('--in-summary-json', type=str, help='summary.json', required=True)
+    parser.add_argument('--in-graph-metadata-json', type=str, help='summary.json', required=True)
     parser.add_argument('--in-template-config-dir', type=str, help='Path of config template', required=True)
     parser.add_argument('--out-config-dir', type=str, help='Path to write config', required=True)
     args = parser.parse_args()
@@ -29,7 +29,7 @@ def main():
     os.system('cp ' + shlex.quote(os.path.join(args.in_template_config_dir, "solrconfig.xml")) + ' ' + shlex.quote(args.out_config_dir))
     os.system('cp ' + shlex.quote(os.path.join(args.in_template_config_dir, "zoo.cfg")) + ' ' + shlex.quote(args.out_config_dir))
 
-    summary = json.load(open(args.in_summary_json))
+    summary = json.load(open(args.in_graph_metadata_json))
     node_props = map(lambda f: f.replace(':', '__').replace('&', '_'), summary['entity_props'].keys())
     edge_props = map(lambda f: f.replace(':', '__').replace('&', '_'), summary['edge_props'].keys())
 

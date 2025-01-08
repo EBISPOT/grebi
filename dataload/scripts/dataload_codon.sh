@@ -18,11 +18,15 @@ module load python-3.10.2-gcc-9.3.0-gswnsij
 source /nfs/production/parkinso/spot/grebi/.venv/bin/activate
 export PYTHONUNBUFFERED=true
 
-mkdir -p /hps/nobackup/parkinso/spot/grebi/$GREBI_SUBGRAPH
-mkdir -p $GREBI_OUT_DIR
+srun --time 1:0:0 --mem 4g mkdir -p /hps/nobackup/parkinso/spot/grebi/$GREBI_SUBGRAPH
+srun --time 1:0:0 --mem 4g mkdir -p $GREBI_OUT_DIR
 
 cd /hps/nobackup/parkinso/spot/grebi/$GREBI_SUBGRAPH
 
-nextflow $GREBI_DATALOAD_HOME/nextflow/load_subgraph.nf -c $GREBI_NEXTFLOW_CONFIG -resume
+echo "Loading subgraph $GREBI_SUBGRAPH"
+echo "pwd is $(pwd)"
+echo "user is $(whoami)"
+
+srun --time 6-0:0:0 --mem 32g nextflow $GREBI_DATALOAD_HOME/nextflow/load_subgraph.nf -c $GREBI_NEXTFLOW_CONFIG -resume
 
 

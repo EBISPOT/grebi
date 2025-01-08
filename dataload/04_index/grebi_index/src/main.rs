@@ -30,10 +30,10 @@ struct Args {
     subgraph_name: String,
 
     #[arg(long)]
-    out_summary_json_path: String,
+    out_graph_metadata_json_path: String,
 
     #[arg(long)]
-    out_metadata_jsonl_path: String,
+    out_entity_metadata_jsonl_path: String,
 
     #[arg(long)]
     out_names_txt: String,
@@ -57,8 +57,8 @@ fn main() {
     let mut all_names:BTreeSet<Vec<u8>> = BTreeSet::new();
     let mut all_ids:BTreeSet<Vec<u8>> = BTreeSet::new();
 
-    let mut summary_writer = BufWriter::new(File::create(&args.out_summary_json_path).unwrap());
-    let mut metadata_writer = BufWriter::new(File::create(&args.out_metadata_jsonl_path).unwrap());
+    let mut graph_metadata_writer = BufWriter::new(File::create(&args.out_graph_metadata_json_path).unwrap());
+    let mut metadata_writer = BufWriter::new(File::create(&args.out_entity_metadata_jsonl_path).unwrap());
     let mut names_writer = BufWriter::new(File::create(&args.out_names_txt).unwrap());
     let mut ids_writer = BufWriter::new(File::create(&args.out_ids_txt).unwrap());
 
@@ -223,7 +223,7 @@ fn main() {
 
     let start_time3 = std::time::Instant::now();
 
-    summary_writer.write_all(
+    graph_metadata_writer.write_all(
     serde_json::to_string_pretty(&json!({
         "subgraph_name": args.subgraph_name,
         "entity_props": entity_props_to_count.iter().map(|(k,v)| {
