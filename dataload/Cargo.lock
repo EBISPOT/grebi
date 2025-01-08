@@ -502,9 +502,11 @@ dependencies = [
  "clap",
  "csv",
  "grebi_shared",
+ "hex",
  "jemallocator",
  "lmdb-zero",
  "serde_json",
+ "sha1",
 ]
 
 [[package]]

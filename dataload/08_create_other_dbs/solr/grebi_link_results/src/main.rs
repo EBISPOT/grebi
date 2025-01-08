@@ -10,6 +10,7 @@ use std::io::{Write, BufWriter};
 use grebi_shared::json_lexer::{lex, JsonTokenType};
 use grebi_shared::json_parser::JsonParser;
 use clap::Parser;
+use sha1::{Sha1, Digest};
 
 use serde_json::Value;
 
@@ -90,6 +91,14 @@ fn main() {
 
         json.insert("_refs".to_string(), Value::Object(refs));
 	json.insert("_node_ids".to_string(), Value::Array( nodeids.iter().map(|id| Value::String(id.clone())).collect()));
+
+    // sha1 not for security, just as a simple way to assign a unique
+    // id to the result to use to reference it in the api
+    //
+    let mut hasher = Sha1::new();
+    hasher.update(&line);
+    let hash = hasher.finalize();
+	json.insert("id".to_string(), Value::String(hex::encode(hash)));
 
         writer.write_all(Value::Object(json).to_string().as_bytes()).unwrap();
         writer.write_all("\n".as_bytes()).unwrap();

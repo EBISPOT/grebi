@@ -300,7 +300,7 @@ process create_sqlite {
     errorStrategy 'retry'
     maxRetries 10
 
-    publishDir "${params.out}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}", overwrite: true
 
     input:
     val(compressed_blobs)
@@ -424,7 +424,7 @@ process run_materialised_queries {
     time "8h"
     cpus "8"
 
-    publishDir "${params.out}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}", overwrite: true
 
     input:
     path(neo_db)
@@ -500,7 +500,7 @@ process add_query_metadatas_to_graph_metadata {
     time "8h"
     cpus "8"
 
-    publishDir "${params.out}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}", overwrite: true
 
     input:
     path(metadata_jsons)
@@ -526,7 +526,7 @@ process csvs_to_sqlite {
     time "12h"
     cpus "8"
 
-    publishDir "${params.out}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}", overwrite: true
 
     input:
     path(csvs)
@@ -659,7 +659,7 @@ process package_neo {
     time "8h"
     cpus "8"
 
-    publishDir "${params.out}${params.subgraph}", overwrite: true
+    publishDir "${params.out}", overwrite: true
 
     input: 
     path("${params.subgraph}_neo4j")
@@ -679,7 +679,7 @@ process package_solr {
     time "8h"
     cpus "8"
 
-    publishDir "${params.out}/${params.subgraph}", overwrite: true
+    publishDir "${params.out}", overwrite: true
 
     input: 
     path(cores)
