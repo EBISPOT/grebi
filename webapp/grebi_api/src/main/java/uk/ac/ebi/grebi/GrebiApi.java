@@ -40,7 +40,7 @@ public class GrebiApi {
         while(true) {
             try {
                 solr = new GrebiSolrRepo();
-                summary = new GrebiMetadataRepo();
+                metadata = new GrebiMetadataRepo();
                 sqliteSubgraphs = (new ResolverClient()).getSubgraphs();
                 solrSubgraphs = solr.getSubgraphs();
                 metadataServiceSubgraphs = metadata.getSubgraphs();
@@ -130,7 +130,7 @@ public class GrebiApi {
                 })
                 .get("/api/v1/subgraphs/{subgraph}", ctx -> {
                     ctx.contentType("application/json");
-                    ctx.result(gson.toJson(metadata.getSummary(ctx.pathParam("subgraph"))));
+                    ctx.result(gson.toJson(metadata.getMetadata(ctx.pathParam("subgraph"))));
                 })
                 .get("/api/v1/subgraphs/{subgraph}/nodes/{nodeId}", ctx -> {
                     ctx.contentType("application/json");
