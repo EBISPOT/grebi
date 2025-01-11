@@ -4,13 +4,13 @@ import { Helmet } from 'react-helmet';
 import React, { Fragment } from "react";
 import HomeIcon from '@mui/icons-material/Home';
 import MediationIcon from '@mui/icons-material/Mediation';
-import { Stack } from "@mui/material";
+import { List, Stack } from "@mui/material";
 import JoinRightIcon from '@mui/icons-material/JoinRight';
 import HelpIcon from '@mui/icons-material/Help';
 import InfoIcon from '@mui/icons-material/Info';
 import DownloadIcon from '@mui/icons-material/Download';
 import TravelExplore from '@mui/icons-material/TravelExplore';
-import { FeaturedPlayList, LibraryBooks, Science, ViewList } from "@mui/icons-material";
+import { FeaturedPlayList, LibraryBooks, ManageSearch, Science, ViewList } from "@mui/icons-material";
 
 
 export default function EbiHeader({ section }: { section?: string }) {
@@ -62,7 +62,7 @@ export default function EbiHeader({ section }: { section?: string }) {
                 </Stack>
               </li>
             </Link>
-            {/* <Link to="/datasources">
+            <Link to="/results">
               <li
                 role="menuitem"
                 className={`px-4 py-3 ${
@@ -72,11 +72,11 @@ export default function EbiHeader({ section }: { section?: string }) {
                 }`}
               >
                 <Stack alignItems="center" direction="row" gap={1}>
-                  <JoinRightIcon />
-                  Subgraphs
+                  <ManageSearch />
+                  Results
                 </Stack>
               </li>
-            </Link> */}
+            </Link>
             <Link to={`/downloads`}>
               <li
                 role="menuitem"

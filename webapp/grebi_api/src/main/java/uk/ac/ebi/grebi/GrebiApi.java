@@ -5,6 +5,7 @@ package uk.ac.ebi.grebi;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.internal.LinkedTreeMap;
 import io.javalin.Javalin;
 
 import java.io.IOException;
@@ -131,6 +132,65 @@ public class GrebiApi {
                 .get("/api/v1/subgraphs/{subgraph}", ctx -> {
                     ctx.contentType("application/json");
                     ctx.result(gson.toJson(metadata.getMetadata(ctx.pathParam("subgraph"))));
+                })
+                .get("/api/v1/materialised_queries", ctx -> {
+                    List<JsonElement> all_matqs = new ArrayList<>();
+                    for(String graph : metadata.getSubgraphs()) {
+                        var matqs = metadata.getMetadata(graph).get("materialised_queries").getAsJsonArray().asList();
+                        for(var mq : matqs) {
+                            // temp hack for botched dataload
+                            if(mq.isJsonArray()) {
+                                for(var qr : mq.getAsJsonArray()) {
+                                    qr.getAsJsonObject().addProperty("subgraph", graph);
+                                    all_matqs.add(qr);
+                                }
+                            } else {
+                                mq.getAsJsonObject().addProperty("subgraph", graph);
+                                all_matqs.add(mq);
+
+                            }
+                        }
+                    }
+                    ctx.contentType("application/json");
+                    ctx.result(gson.toJson(all_matqs));
+                })
+                .get("/api/v1/subgraphs/{subgraph}/materialised_queries", ctx -> {
+                    var md = metadata.getMetadata(ctx.pathParam("subgraph"));
+                    ctx.contentType("application/json");
+                    ctx.result(gson.toJson(md.get("materialised_queries")));
+                })
+                .get("/api/v1/subgraphs/{subgraph}/materialised_queries/{queryid}", ctx -> {
+                    var q = new GrebiSolrQuery();
+                    q.setSearchText(ctx.queryParam("q"));
+                    q.setExactMatch(false);
+                    for(var param : ctx.queryParamMap().entrySet()) {
+                        if(param.getKey().equals("q") ||
+                                param.getKey().equals("page") ||
+                                param.getKey().equals("size") ||
+                                param.getKey().equals("exactMatch") ||
+                                param.getKey().equals("includeObsoleteEntries") ||
+                                param.getKey().equals("lang") ||
+                                param.getKey().equals("facet")
+                        ) {
+                            continue;
+                        }
+                        q.addFilter(param.getKey(), param.getValue(), SearchType.WHOLE_FIELD, false);
+                    }
+                    for(var facetField : ctx.queryParams("facet")) {
+                        q.addFacetField(facetField);
+                    }
+                    var page_num = ctx.queryParam("page");
+                    if(page_num == null) {
+                        page_num = "0";
+                    }
+                    var size = ctx.queryParam("size");
+                    if(size == null) {
+                        size = "10";
+                    }
+                    var page = PageRequest.of(Integer.parseInt(page_num), Integer.parseInt(size));
+                    var res = solr.searchResultsPaginated(ctx.pathParam("subgraph"), ctx.pathParam("queryid"), q, page);
+                    ctx.contentType("application/json");
+                    ctx.result(gson.toJson(res));
                 })
                 .get("/api/v1/subgraphs/{subgraph}/nodes/{nodeId}", ctx -> {
                     ctx.contentType("application/json");

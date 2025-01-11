@@ -37,6 +37,7 @@ public class GrebiSolrClient {
     private static final Logger logger = LoggerFactory.getLogger(GrebiSolrClient.class);
     public static final int MAX_ROWS = 1000;
     static final String SOLR_HOST = System.getenv("GREBI_SOLR_HOST");
+    Set<String> cores;
 
     public static String getSolrHost() {
         if (SOLR_HOST != null)
@@ -45,6 +46,9 @@ public class GrebiSolrClient {
     }
 
     public Set<String> listCores() {
+
+        if(this.cores != null)
+            return this.cores;
 
         CoreAdminRequest request = new CoreAdminRequest();
         request.setAction(CoreAdminAction.STATUS);
@@ -55,6 +59,7 @@ public class GrebiSolrClient {
             for (int i = 0; i < cores.getCoreStatus().size(); i++) {
                 ret.add(cores.getCoreStatus().getName(i));
             }
+            this.cores = ret;
             return ret;
         } catch (Exception e) {
             e.printStackTrace();

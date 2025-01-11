@@ -12,7 +12,8 @@ def main():
         for query_metadata_filename in query_metadata_filenames:
             with open(query_metadata_filename, 'r') as file:
                 query_metadata = json.load(file)
-            graph_metadata['materialised_queries'].append(query_metadata)
+                for q in query_metadata:
+                    graph_metadata['materialised_queries'].append(q)
      
     print(json.dumps(graph_metadata, indent=2))
 

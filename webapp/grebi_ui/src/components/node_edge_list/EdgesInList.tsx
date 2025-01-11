@@ -120,6 +120,7 @@ export default function EdgesInList(params:{
                     }
                 }) as any
             ]}
+            defaultSelector={(row:any,key:string)=>row[key]}
             data={edgesState.edges}
             dataCount={edgesState.total}
             page={page}

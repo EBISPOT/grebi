@@ -33,7 +33,7 @@ export default function EbiHomePage() {
           <div className="lg:col-span-3">
             <div className="bg-gradient-to-r from-neutral-light to-white rounded-lg my-8 p-8">
               <div className="text-3xl mb-4 text-neutral-black font-bold">
-                Welcome to the EMBL-EBI Knowledge Graph Interface
+                Welcome to the EMBL-EBI Knowledge Graph
               </div>
               {subgraphs && subgraph ?
                 <Fragment>
@@ -98,7 +98,7 @@ export default function EbiHomePage() {
                   This website enables you to search and explore data from multiple EBI resources, linked together using knowledge graphs including the <Link className="link-default" to="https://monarchinitiative.org/">MONARCH Initiative KG</Link> and <Link className="link-default" to="https://robokop.renci.org/api-docs/docs/automat/robokop-kg">ROBOKOP</Link> and ontology relationships from <Link className="link-default" to="https://www.ebi.ac.uk/ols4">OLS</Link> and <Link className="link-default" to="https://github.com/INCATools/ubergraph">UberGraph</Link>.
                 </p>
                 <p className="mb-3">
-                  GrEBI is a very early work in progress. No querying interface is currently provided other than simple search/browsing functionality. If you are interested in querying GrEBI and/or have a potential application please <Link className="link-default" to="mailto:jmcl@ebi.ac.uk">get in touch</Link>.
+                  GrEBI is a very early work in progress. No querying service is currently provided other than simple search/browsing functionality. If you are interested in querying GrEBI and/or have a potential application please <Link className="link-default" to="mailto:jmcl@ebi.ac.uk">get in touch</Link>.
                 </p>
                 <p>
                   For source code and more information see the <Link className="link-default" to="https://github.com/EBISPOT/GrEBI">GrEBI GitHub repository</Link>.

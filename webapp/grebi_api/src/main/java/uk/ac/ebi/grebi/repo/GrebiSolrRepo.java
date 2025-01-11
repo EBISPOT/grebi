@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -21,6 +22,7 @@ public class GrebiSolrRepo {
 
     GrebiSolrClient solrClient = new GrebiSolrClient();
     ResolverClient resolver = new ResolverClient();
+    Gson gson = new Gson();
 
     public GrebiSolrRepo() {
     }
@@ -123,6 +125,28 @@ public class GrebiSolrRepo {
             }
         }
         return res;
+    }
+
+    public GrebiFacetedResultsPage<Map<String, Object>> searchResultsPaginated(
+            String subgraph, String queryid, GrebiSolrQuery q, Pageable pageable) {
+        String core = "grebi_results__" + subgraph + "__" + queryid;
+        if(!solrClient.listCores().contains(core))
+            throw new RuntimeException("results core " + core + " not found");
+        var page = solrClient.searchSolrPaginated(core, q, pageable);
+
+        return page.map(row -> {
+            var map = new HashMap<String,Object>();
+            for(var k : row.keySet()) {
+                var v = row.get(k);
+                if(k.equals("_refs")) {
+                    var refs_parsed = gson.fromJson((String)v, Map.class);
+                    map.put("_refs", refs_parsed);
+                } else {
+                    map.put(k, v);
+                }
+            }
+            return map;
+        });
     }
 
 

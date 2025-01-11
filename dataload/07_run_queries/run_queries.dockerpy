@@ -29,8 +29,10 @@ for file in os.listdir("/materialised_queries"):
 
     print(f"Running query {query_id}")
 
+    n=0
     with open(f"/out/{query_id}.results.jsonl", "w") as f:
         for row in graph.run(query['cypher_query']).data():
+            n=n+1
             json.dump(row, f, skipkeys=True)
             f.write("\n")
 
@@ -40,6 +42,7 @@ for file in os.listdir("/materialised_queries"):
     query['start_time'] = start_time.strftime("%Y-%m-%d %H:%M:%S")
     query['end_time'] = end_time.strftime("%Y-%m-%d %H:%M:%S")
     query['time'] = (end_time - start_time).total_seconds()
+    query['num_results'] = n
 
     metadatas.append(query)
 
