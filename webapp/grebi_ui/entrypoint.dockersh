@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /opt/ols4-frontend
+cd /opt/grebi_ui
 
 echo Building frontend. REACT_APP_ENV: $REACT_APP_ENV
 

@@ -2,10 +2,11 @@ services:
     grebi-ui:
       image: ghcr.io/ebispot/grebi_ui:dev
       ports:
-        - 8080:8080
+        - 3000:8080
       environment:
         - PUBLIC_URL=/
         - REACT_APP_APIURL=http://localhost:8090
+        - REACT_APP_ENV=ebi
     grebi-api:
       image: ghcr.io/ebispot/grebi_api:dev
       ports:
