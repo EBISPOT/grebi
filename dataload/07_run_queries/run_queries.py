@@ -45,6 +45,7 @@ def main():
             '--env NEO4J_server_memory_pagecache_size=150G',
             '--env NEO4J_dbms_memory_transaction_total_max=150G',
             '--env TINI_SUBREAPER=true',
+            '--env GREBI_SUBGRAPH='+os.environ['GREBI_SUBGRAPH'],   
             'docker://ghcr.io/ebispot/grebi_neo4j_with_extras:5.18.0',
             'python3 /run_queries.py'
         ])
@@ -58,6 +59,7 @@ def main():
             '-v ' + os.path.abspath(os.environ['GREBI_QUERY_YAMLS_PATH']) + ':/materialised_queries',
             '-v ' + os.path.abspath(args.out_jsons_path) + ':/out',
             '-e NEO4J_AUTH=none',
+            '-e GREBI_SUBGRAPH='+os.environ['GREBI_SUBGRAPH'],   
             'ghcr.io/ebispot/grebi_neo4j_with_extras:5.18.0',
             'python3 /run_queries.py'
         ])

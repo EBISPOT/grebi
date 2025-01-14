@@ -25,6 +25,9 @@ for file in os.listdir("/materialised_queries"):
 
     query = yaml.safe_load(open(f"/materialised_queries/{file}"))
 
+    if os.environ['GREBI_SUBGRAPH'] not in query['run_for_subgraphs']:
+        continue
+
     start_time = datetime.now()
 
     print(f"Running query {query_id}")
@@ -39,6 +42,7 @@ for file in os.listdir("/materialised_queries"):
     end_time = datetime.now()
 
     query['id'] = query_id
+    query['subgraph'] = os.environ['GREBI_SUBGRAPH']
     query['start_time'] = start_time.strftime("%Y-%m-%d %H:%M:%S")
     query['end_time'] = end_time.strftime("%Y-%m-%d %H:%M:%S")
     query['time'] = (end_time - start_time).total_seconds()
